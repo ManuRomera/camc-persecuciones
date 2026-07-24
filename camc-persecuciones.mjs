@@ -29,7 +29,7 @@ Hooks.once("init", async () => {
     `modules/${MODULE_ID}/templates/chase-hud.hbs`
   ]);
 
-  // Registrar setting para guardar el estado del mundo
+  // Registrar setting para el estado persistente del mundo
   game.settings.register(MODULE_ID, ChaseState.SETTING_KEY, {
     name: "Estado Activo de Persecución",
     scope: "world",
@@ -47,13 +47,28 @@ Hooks.once("init", async () => {
     }
   });
 
-  // Registrar Keybinding (Atajo de teclado: Alt + P)
+  // Registrar Menú en Configuración de la partida -> Ajustes del Módulo
+  const FormAppCls = foundry.appv1?.api?.FormApplication || FormApplication;
+  class CAMCChaseHUDMenu extends FormAppCls {
+    render() {
+      toggleChaseHUD();
+    }
+  }
+
+  game.settings.registerMenu(MODULE_ID, "openChaseHUDMenu", {
+    name: "Control Visual de Persecuciones",
+    label: "Abrir Control de Persecuciones",
+    hint: "Abre la ventana interactiva del control visual de persecuciones en pantalla.",
+    icon: "fas fa-flag-checkered",
+    type: CAMCChaseHUDMenu,
+    restricted: false
+  });
+
+  // Keybinding (Alt + P)
   game.keybindings.register(MODULE_ID, "toggleChaseHUDKey", {
     name: "Abrir/Cerrar Control de Persecuciones",
-    hint: "Alterna la visibilidad de la ventana visual de persecuciones.",
-    editable: [
-      { key: "KeyP", modifiers: ["Alt"] }
-    ],
+    hint: "Alterna la visibilidad de la ventana de persecuciones.",
+    editable: [{ key: "KeyP", modifiers: ["Alt"] }],
     onDown: () => {
       toggleChaseHUD();
       return true;
@@ -93,41 +108,82 @@ Hooks.once("ready", () => {
     }
   });
 
-  console.log(`CAMC Persecuciones | Listo. Puedes usar Alt+P o el botón de escena/hoja para abrir el panel.`);
+  console.log(`CAMC Persecuciones | Listo.`);
 });
 
-// 3. BOTÓN EN LA BARRA DE HERRAMIENTAS DE ESCENA
+// 3. INTEGRACIÓN EN CONTROLES DE ESCENA (BARRA IZQUIERDA Y CATEGORÍA PROPIA)
 Hooks.on("getSceneControlButtons", controls => {
-  let tokenCategory = null;
+  const chaseCategory = {
+    name: "camc-persecuciones",
+    title: "Persecuciones",
+    icon: "fas fa-flag-checkered",
+    layer: "tokens",
+    visible: true,
+    tools: [
+      {
+        name: "chase-hud-toggle",
+        title: "Control Visual de Persecuciones (CAMC)",
+        icon: "fas fa-road",
+        button: true,
+        visible: true,
+        onClick: () => toggleChaseHUD(),
+        onChange: () => toggleChaseHUD()
+      }
+    ]
+  };
 
   if (Array.isArray(controls)) {
-    tokenCategory = controls.find(c => c.name === "tokens" || c.name === "token");
+    controls.push(chaseCategory);
+    const tokenCategory = controls.find(c => c.name === "tokens" || c.name === "token");
+    if (tokenCategory && Array.isArray(tokenCategory.tools)) {
+      tokenCategory.tools.push({
+        name: "camc-persecuciones-token-tool",
+        title: "Control Visual de Persecuciones",
+        icon: "fas fa-flag-checkered",
+        button: true,
+        visible: true,
+        onClick: () => toggleChaseHUD(),
+        onChange: () => toggleChaseHUD()
+      });
+    }
   } else if (controls && typeof controls === "object") {
-    tokenCategory = controls.tokens || controls.token;
-  }
-
-  if (tokenCategory) {
-    const tool = {
-      name: "camc-persecuciones",
-      title: "Control Visual de Persecuciones",
-      icon: "fas fa-flag-checkered",
-      visible: true,
-      button: true,
-      onClick: () => toggleChaseHUD(),
-      onChange: (event, active) => { if (active) toggleChaseHUD(); }
-    };
-
-    if (Array.isArray(tokenCategory.tools)) {
-      if (!tokenCategory.tools.some(t => t.name === "camc-persecuciones")) {
-        tokenCategory.tools.push(tool);
+    controls["camc-persecuciones"] = chaseCategory;
+    if (controls.tokens || controls.token) {
+      const tCat = controls.tokens || controls.token;
+      if (tCat.tools && typeof tCat.tools === "object") {
+        tCat.tools["camc-persecuciones-token-tool"] = {
+          name: "camc-persecuciones-token-tool",
+          title: "Control Visual de Persecuciones",
+          icon: "fas fa-flag-checkered",
+          button: true,
+          visible: true,
+          onClick: () => toggleChaseHUD(),
+          onChange: () => toggleChaseHUD()
+        };
       }
-    } else if (tokenCategory.tools && typeof tokenCategory.tools === "object") {
-      tokenCategory.tools["camc-persecuciones"] = tool;
     }
   }
 });
 
-// 4. BOTÓN EN LA CABECERA DE LAS HOJAS DE PERSONAJE Y MOTO
+// 4. INTEGRACIÓN EN EL COMBAT TRACKER (BARRA LATERAL DERECHA DE COMBATE)
+Hooks.on("renderCombatTracker", (app, html) => {
+  const root = html[0] || html;
+  if (root.querySelector(".camc-chase-sidebar-btn")) return;
+
+  const header = root.querySelector(".combat-tracker-header") || root.querySelector("header") || root;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "camc-chase-sidebar-btn";
+  button.style.cssText = "margin: 6px 0; background: linear-gradient(180deg, #202729, #101415); border: 1px solid #02d6e7; color: #fff; font-family: CAMCHead, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; padding: 7px; border-radius: 4px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.4);";
+  button.innerHTML = '<i class="fas fa-flag-checkered" style="color: #02d6e7; font-size: 14px;"></i> Control de Persecución';
+  button.addEventListener("click", () => toggleChaseHUD());
+
+  if (header) {
+    header.appendChild(button);
+  }
+});
+
+// 5. BOTÓN EN LA CABECERA DE HOJAS DE PERSONAJE Y MOTO
 Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
   buttons.unshift({
     label: "Persecución",
