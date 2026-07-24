@@ -4,7 +4,7 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Lee y muestra la Moto Vinculada, Maniobrabilidad, Estructura y Penalizadores de Daño Grave.
+ * Integrado 100% con CAMCMountRolls, YsystemDice, Moto Vinculada y Reglamento Oficial.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   static get defaultOptions() {
@@ -29,11 +29,11 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const config = CONFIG.CAMC?.persecucion || {};
     const terrenos = (config.terrenos || []).map(t => ({
       ...t,
-      selected: t.key === state.terreno
+      selected: String(t.dificultad) === String(state.terreno) || t.key === state.terreno
     }));
     const visibilidad = (config.visibilidad || []).map(v => ({
       ...v,
-      selected: v.key === state.visibilidad
+      selected: String(v.mod) === String(state.visibilidad) || v.key === state.visibilidad
     }));
 
     const maxFranjas = state.franjasMax || 10;
@@ -55,45 +55,34 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     }
 
-    // Enriquecer cada participante con su Moto Vinculada, Maniobrabilidad y Estructura
+    // Enriquecer cada participante resolviendo la vinculación bidireccional entre Piloto y Moto
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
-      const actor = await this._getActor(p.actorUuid);
-      let mountActor = null;
+      const { pilotActor, motoActor } = await this._resolvePilotAndMoto(p);
+
       let mountInfo = null;
-
-      // Buscar Moto vinculada por UUID en system.mount o system.vehiculo
-      const mountUuid = p.mountUuid || actor?.system?.mount?.uuid || actor?.system?.vehiculo?.uuid;
-      if (mountUuid) {
-        mountActor = await this._getActor(mountUuid);
-      } else if (actor?.type === "moto") {
-        mountActor = actor;
-      }
-
-      if (mountActor) {
-        const estVal = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
-        const estMax = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
-        const maniobrabilidad = Number(mountActor.system?.reglas?.maniobrabilidad ?? mountActor.system?.maniobrabilidad ?? 2);
-        const danoGrave = mountActor.system?.reglas?.dano_grave || (estVal > 0 && estVal <= Math.floor(estMax / 2));
-        const inutilizada = estVal <= 0;
+      if (motoActor) {
+        const estVal = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
+        const estMax = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
+        const maniobrabilidad = Number(motoActor.system?.reglas?.maniobrabilidad ?? motoActor.system?.maniobrabilidad ?? 2);
+        const danoGrave = mountInfo ? mountInfo.danoGrave : (estVal > 0 && estVal <= Math.floor(estMax / 2));
 
         mountInfo = {
-          actor: mountActor,
-          uuid: mountActor.uuid,
-          name: mountActor.name,
-          img: mountActor.img || "icons/svg/item-bag.svg",
+          actor: motoActor,
+          uuid: motoActor.uuid,
+          name: motoActor.name,
+          img: motoActor.img || "icons/svg/item-bag.svg",
           maniobrabilidad: maniobrabilidad,
           estructuraVal: estVal,
           estructuraMax: estMax,
           estructuraPct: Math.clamp(Math.round((estVal / Math.max(1, estMax)) * 100), 0, 100),
-          danoGrave: danoGrave,
-          inutilizada: inutilizada
+          danoGrave: danoGrave
         };
       }
 
       let healthInfo = null;
-      if (actor && (actor.type === "personaje" || actor.type === "pnj")) {
-        const hVal = Number(actor.system?.combate?.salud?.value ?? actor.system?.salud?.value ?? 10);
-        const hMax = Number(actor.system?.combate?.salud?.max ?? actor.system?.salud?.max ?? 10);
+      if (pilotActor) {
+        const hVal = Number(pilotActor.system?.combate?.salud?.value ?? pilotActor.system?.salud?.value ?? 10);
+        const hMax = Number(pilotActor.system?.combate?.salud?.max ?? pilotActor.system?.salud?.max ?? 10);
         healthInfo = {
           value: hVal,
           max: hMax,
@@ -103,10 +92,13 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       return {
         ...p,
-        actor,
+        pilotActor,
+        motoActor,
+        name: pilotActor?.name || p.name,
+        img: pilotActor?.img || p.img,
         mountInfo,
         healthInfo,
-        isControlled: actor ? actor.isOwner : isGM
+        isControlled: pilotActor ? pilotActor.isOwner : isGM
       };
     }));
 
@@ -126,6 +118,31 @@ export class CAMCChaseHUD extends ApplicationV1 {
     };
   }
 
+  /**
+   * Resuelve el par Piloto (Personaje/PNJ) y Moto de un participante.
+   */
+  async _resolvePilotAndMoto(participant) {
+    let mainActor = await this._getActor(participant.actorUuid);
+    let mountActor = participant.mountUuid ? await this._getActor(participant.mountUuid) : null;
+    let pilotActor = null;
+
+    if (mainActor?.type === "moto") {
+      motoActor = mainActor;
+      const pilotUuid = motoActor.system?.reglas?.piloto_uuid || game.actors?.find(a => a.system?.mount?.uuid === motoActor.uuid)?.uuid;
+      pilotActor = pilotUuid ? await this._getActor(pilotUuid) : game.user.character;
+    } else {
+      pilotActor = mainActor;
+      if (!mountActor) {
+        const mountUuid = pilotActor?.system?.mount?.uuid || pilotActor?.system?.vehiculo?.uuid;
+        if (mountUuid) {
+          mountActor = await this._getActor(mountUuid);
+        }
+      }
+    }
+
+    return { pilotActor, motoActor: mountActor };
+  }
+
   async _getActor(uuidOrId) {
     if (!uuidOrId) return null;
     try {
@@ -135,6 +152,29 @@ export class CAMCChaseHUD extends ApplicationV1 {
       }
     } catch (e) {}
     return game.actors?.get(uuidOrId) || game.actors?.find(a => a.uuid === uuidOrId || a.id === uuidOrId) || null;
+  }
+
+  /**
+   * Obtención dinámica de las clases de tirada del sistema CAMC.
+   */
+  async _getSystemRollers() {
+    let MountRollsCls = game.camc?.CAMCMountRolls || game.cuervosDeAsgard?.CAMCMountRolls;
+    if (!MountRollsCls) {
+      try {
+        const mod = await import("/systems/cuervos-de-asgard-mc/module/mount/mount-rolls.mjs");
+        MountRollsCls = mod.CAMCMountRolls;
+      } catch (e) {}
+    }
+
+    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
+    if (!YsystemDiceCls) {
+      try {
+        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
+        YsystemDiceCls = mod.YsystemDice;
+      } catch (e) {}
+    }
+
+    return { MountRollsCls, YsystemDiceCls };
   }
 
   activateListeners(html) {
@@ -215,7 +255,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // BOTONES DIRECTOS DE MOVIMIENTO CON APLICACIÓN DE MANIOBRABILIDAD
+    // BOTONES DIRECTOS DE MOVIMIENTO
     container.querySelectorAll(".btn-roll-mov-direct").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -259,84 +299,57 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- MOVIMIENTO CON BONIFICADOR DE MANIOBRABILIDAD Y PENALIZADOR DE DAÑO GRAVE ---
+  // --- EJECUCIÓN DE MOVIMIENTO USANDO CAMCMountRolls.rollDrive DEL SISTEMA ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
     if (!p) return;
 
-    const actor = await this._getActor(p.actorUuid);
-    if (!actor) {
-      ui.notifications.error(`No se encontró el actor para ${p.name}`);
+    const { pilotActor, motoActor } = await this._resolvePilotAndMoto(p);
+    if (!pilotActor) {
+      ui.notifications.error(`No se encontró el piloto para ${p.name}`);
       return;
     }
 
-    // Buscar la moto vinculada
-    const mountUuid = p.mountUuid || actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
-    let mountActor = null;
-    if (mountUuid) {
-      mountActor = await this._getActor(mountUuid);
-    } else if (actor.type === "moto") {
-      mountActor = actor;
-    }
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
     const movConfig = CONFIG.CAMC?.persecucion?.movimiento?.find(m => m.key === actionKey);
     const actionMod = movConfig?.mod ?? 0;
+    const actionLabel = movConfig?.label || actionKey;
 
     if (actionKey === "mantener_posicion") {
       ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
+        speaker: ChatMessage.getSpeaker({ actor: pilotActor }),
         content: `
           <div class="camc-chat-card">
             <header>
-              <h3><i class="fas fa-tachometer-alt"></i> Movimiento Rúnico</h3>
-              <strong>${actor.name} (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"})</strong>
+              <h3><i class="fas fa-tachometer-alt"></i> Movimiento de Persecución</h3>
+              <strong>${pilotActor.name} (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"})</strong>
             </header>
-            <p><b>Mantener posición:</b> Conserva la Franja ${p.franja} sin realizar tirada.</p>
+            <p><b>Mantener posición:</b> Conserva la Franja ${p.franja} sin necesidad de realizar tirada.</p>
           </div>
         `
       });
       return;
     }
 
-    // Cálculo de Bonificación de Maniobrabilidad y Penalización por Daño Grave de la Moto
-    let maniobrabilidad = 0;
-    let danoGravePenalty = 0;
-
-    if (mountActor) {
-      maniobrabilidad = Number(mountActor.system?.reglas?.maniobrabilidad ?? mountActor.system?.maniobrabilidad ?? 2);
-      const estVal = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
-      const estMax = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
-      if (estVal <= Math.floor(estMax / 2)) {
-        danoGravePenalty = 3; // -3 de penalizador si la estructura <= 50%
-      }
-    }
-
-    // Dificultad Final = Base + Mod Acción + Penalizador Obstaculizado + Penalizador Daño Grave - Maniobrabilidad Moto
-    const totalModifier = actionMod + (p.obstaculizadoMod || 0) + danoGravePenalty - maniobrabilidad;
-    const finalDifficulty = baseDiff + totalModifier;
-
-    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
-    if (!YsystemDiceCls) {
-      try {
-        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
-        YsystemDiceCls = mod.YsystemDice;
-      } catch (e) {}
-    }
+    // Dificultad objetivo = Terreno + Visibilidad + ModAcción + Penalización Obstaculizado
+    const targetDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
 
     let result = null;
 
-    if (mountActor && game.cuervosDeAsgard?.CAMCMountRolls) {
-      result = await game.cuervosDeAsgard.CAMCMountRolls.rollDrive(actor, mountActor, {
-        label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey}`,
-        difficulty: finalDifficulty
+    if (motoActor && MountRollsCls) {
+      // Usar la función nativa del sistema Cuervos de Asgard que aplica Maniobrabilidad y Daño Grave automáticamente
+      result = await MountRollsCls.rollDrive(pilotActor, motoActor, {
+        label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${actionLabel}`,
+        difficulty: targetDifficulty
       });
     } else if (YsystemDiceCls) {
-      const skillName = actor.system?.habilidades?.conducir ? "conducir" : "atletismo";
-      result = await YsystemDiceCls.rollSkill(actor, skillName, {
-        dificultad: finalDifficulty,
-        labelName: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey} [Maniobrabilidad +${maniobrabilidad}${danoGravePenalty ? " | Daño Grave -3" : ""}]`
+      const skillName = pilotActor.system?.habilidades?.conducir ? "conducir" : "atletismo";
+      result = await YsystemDiceCls.rollSkill(pilotActor, skillName, {
+        dificultad: targetDifficulty,
+        labelName: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${actionLabel}`
       });
     }
 
@@ -368,15 +381,15 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- AUTOMATIZACIÓN DE MANIOBRAS Y ATAQUES ---
+  // --- EJECUCIÓN DE MANIOBRAS ---
   async _executeManeuverRoll(participantId, maneuverKey) {
     const state = ChaseState.get();
     const attacker = state.participants.find(x => x.id === participantId);
     if (!attacker) return;
 
-    const attackerActor = await this._getActor(attacker.actorUuid);
+    const { pilotActor: attackerActor, motoActor: attackerMoto } = await this._resolvePilotAndMoto(attacker);
     if (!attackerActor) {
-      ui.notifications.error("No se encontró el actor atacante.");
+      ui.notifications.error("No se encontró el piloto atacante.");
       return;
     }
 
@@ -402,16 +415,16 @@ export class CAMCChaseHUD extends ApplicationV1 {
       if (!targetParticipant) return;
     }
 
-    const targetActor = await this._getActor(targetParticipant.actorUuid);
+    const { pilotActor: targetActor, motoActor: targetMoto } = await this._resolvePilotAndMoto(targetParticipant);
 
     if (maneuverKey === "atacar_directo") {
-      await this._resolveDirectAttack(attacker, attackerActor, targetParticipant, targetActor, state);
+      await this._resolveDirectAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
     } else if (maneuverKey === "atacar_estabilizando") {
-      await this._resolveStabilizedAttack(attacker, attackerActor, targetParticipant, targetActor, state);
+      await this._resolveStabilizedAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
     } else if (maneuverKey === "chocar") {
-      await this._resolveCrash(attacker, attackerActor, targetParticipant, targetActor, state);
+      await this._resolveCrash(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state);
     } else if (maneuverKey === "embestir") {
-      await this._resolveRam(attacker, attackerActor, targetParticipant, targetActor, state);
+      await this._resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state);
     }
   }
 
@@ -444,53 +457,56 @@ export class CAMCChaseHUD extends ApplicationV1 {
     });
   }
 
-  async _resolveDirectAttack(attacker, attackerActor, targetParticipant, targetActor, state) {
-    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
-    if (!YsystemDiceCls) {
-      try {
-        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
-        YsystemDiceCls = mod.YsystemDice;
-      } catch (e) {}
-    }
+  async _resolveDirectAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
     const driverMod = attacker.isDriver ? 5 : 2;
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? targetActor?.system?.evasion ?? 10);
     const finalDifficulty = targetEvasion + driverMod + visibMod;
 
-    const skillName = attackerActor.system?.habilidades?.armas_fuego ? "armas_fuego" : (attackerActor.system?.habilidades?.combate_cuerpo_a_cuerpo ? "combate_cuerpo_a_cuerpo" : "conducir");
-
-    const attackResult = await YsystemDiceCls.rollSkill(attackerActor, skillName, {
-      dificultad: finalDifficulty,
-      labelName: `Ataque Directo a ${targetActor?.name || "Objetivo"} (Evasión D${finalDifficulty})`
-    });
+    let attackResult = null;
+    if (attackerMoto && MountRollsCls) {
+      attackResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Ataque Directo a ${targetActor?.name || "Objetivo"}`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      const skillName = attackerActor.system?.habilidades?.armas_fuego ? "armas_fuego" : "conducir";
+      attackResult = await YsystemDiceCls.rollSkill(attackerActor, skillName, {
+        dificultad: finalDifficulty,
+        labelName: `Ataque Directo a ${targetActor?.name}`
+      });
+    }
 
     if (attackResult && (attackResult.exito || attackResult.isSuccess)) {
       const damageRoll = await new Roll("2d6").evaluate({ async: true });
-      const damage = damageRoll.total;
-      await this._applyDamageToTarget(targetParticipant, targetActor, damage);
+      await this._applyDamageToTarget(targetParticipant, targetActor, damageRoll.total);
     }
   }
 
-  async _resolveStabilizedAttack(attacker, attackerActor, targetParticipant, targetActor, state) {
-    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
-    if (!YsystemDiceCls) {
-      try {
-        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
-        YsystemDiceCls = mod.YsystemDice;
-      } catch (e) {}
-    }
+  async _resolveStabilizedAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
-    const stabResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
-      dificultad: baseDiff,
-      labelName: "Pre-maniobra: Estabilizar Vehículo"
-    });
+    let stabResult = null;
+
+    if (attackerMoto && MountRollsCls) {
+      stabResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: "Pre-maniobra: Estabilizar Vehículo",
+        difficulty: baseDiff
+      });
+    } else if (YsystemDiceCls) {
+      stabResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: baseDiff,
+        labelName: "Pre-maniobra: Estabilizar Vehículo"
+      });
+    }
 
     if (stabResult && (stabResult.exito || stabResult.isSuccess)) {
       const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
       const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-      const finalDifficulty = targetEvasion + visibMod;
+      const finalDifficulty = targetEvasion + visibMod; // Sin penalizador +5 de piloto por haber estabilizado
 
       const attackResult = await YsystemDiceCls.rollSkill(attackerActor, "armas_fuego", {
         dificultad: finalDifficulty,
@@ -504,23 +520,25 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  async _resolveCrash(attacker, attackerActor, targetParticipant, targetActor, state) {
-    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
-    if (!YsystemDiceCls) {
-      try {
-        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
-        YsystemDiceCls = mod.YsystemDice;
-      } catch (e) {}
-    }
+  async _resolveCrash(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
     const finalDifficulty = targetEvasion + 4 + visibMod;
 
-    const crashResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
-      dificultad: finalDifficulty,
-      labelName: `Chocar directamente contra ${targetActor?.name}`
-    });
+    let crashResult = null;
+    if (attackerMoto && MountRollsCls) {
+      crashResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Chocar directamente contra ${targetActor?.name}`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      crashResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: finalDifficulty,
+        labelName: `Chocar directamente contra ${targetActor?.name}`
+      });
+    }
 
     if (crashResult && (crashResult.exito || crashResult.isSuccess)) {
       const dmgRoll1 = await new Roll("2d6").evaluate({ async: true });
@@ -531,14 +549,8 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  async _resolveRam(attacker, attackerActor, targetParticipant, targetActor, state) {
-    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
-    if (!YsystemDiceCls) {
-      try {
-        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
-        YsystemDiceCls = mod.YsystemDice;
-      } catch (e) {}
-    }
+  async _resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
     const selfDmgRoll = await new Roll("1d6").evaluate({ async: true });
     await this._applyDamageToTarget(attacker, attackerActor, selfDmgRoll.total);
@@ -547,10 +559,18 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
     const finalDifficulty = targetEvasion + 2 + visibMod;
 
-    const ramResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
-      dificultad: finalDifficulty,
-      labelName: `Embestir a ${targetActor?.name}`
-    });
+    let ramResult = null;
+    if (attackerMoto && MountRollsCls) {
+      ramResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Embestir a ${targetActor?.name}`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      ramResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: finalDifficulty,
+        labelName: `Embestir a ${targetActor?.name}`
+      });
+    }
 
     if (ramResult && (ramResult.exito || ramResult.isSuccess)) {
       const ramDmgRoll = await new Roll("2d6 - 1").evaluate({ async: true });
@@ -561,26 +581,24 @@ export class CAMCChaseHUD extends ApplicationV1 {
   async _applyDamageToTarget(participant, actor, damage) {
     if (!actor || damage <= 0) return;
 
-    let mountActor = null;
-    const mountUuid = participant.mountUuid || actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
-    if (mountUuid) {
-      mountActor = await this._getActor(mountUuid);
-    }
+    const { motoActor } = await this._resolvePilotAndMoto(participant);
 
-    if (mountActor) {
-      const current = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
-      const max = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
+    if (motoActor) {
+      const current = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
+      const max = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
       const newVal = Math.max(0, current - damage);
-      if (mountActor.system?.reglas?.estructura) {
-        await mountActor.update({ "system.reglas.estructura.value": newVal });
-      } else if (mountActor.system?.estructura) {
-        await mountActor.update({ "system.estructura.value": newVal });
+
+      if (motoActor.system?.reglas?.estructura) {
+        await motoActor.update({ "system.reglas.estructura.value": newVal });
+      } else if (motoActor.system?.estructura) {
+        await motoActor.update({ "system.estructura.value": newVal });
       }
-      ui.notifications.warn(`⚡ Estructura de ${mountActor.name} reducida a ${newVal}/${max}.`);
+      ui.notifications.warn(`⚡ Estructura de ${motoActor.name} reducida a ${newVal}/${max}.`);
     } else if (actor.type === "moto") {
       const current = Number(actor.system?.reglas?.estructura?.value ?? actor.system?.estructura?.value ?? 15);
       const max = Number(actor.system?.reglas?.estructura?.max ?? actor.system?.estructura?.max ?? 15);
       const newVal = Math.max(0, current - damage);
+
       if (actor.system?.reglas?.estructura) {
         await actor.update({ "system.reglas.estructura.value": newVal });
       } else {

@@ -1,6 +1,6 @@
 /**
  * Modelo de Estado Global para Persecuciones en Cuervos de Asgard MC.
- * Integración con Motos Vinculadas, Maniobrabilidad y Daño Grave.
+ * Vinculación bidireccional entre Piloto y Moto.
  */
 export class ChaseState {
   static SETTING_KEY = "activeChaseState";
@@ -77,40 +77,33 @@ export class ChaseState {
     if (!actor) return;
     const current = this.get();
 
-    if (current.participants.some(p => p.actorUuid === actor.uuid || p.actorUuid === actor.id)) {
+    const actorUuid = actor.uuid || actor.id;
+    if (current.participants.some(p => p.actorUuid === actorUuid)) {
       ui.notifications.info(`${actor.name} ya está en la persecución.`);
       return;
     }
 
     let mountUuid = null;
-    let mountName = null;
-    let mountImg = null;
+    let pilotUuid = null;
 
-    if (actor.type === "personaje" || actor.type === "pnj") {
-      const uuid = actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
-      if (uuid) {
-        mountUuid = uuid;
-        mountName = actor.system.mount?.name || actor.system.vehiculo?.nombre || "Moto Vinculada";
-        mountImg = actor.system.mount?.img || "icons/svg/item-bag.svg";
-      }
-    } else if (actor.type === "moto") {
-      mountUuid = actor.uuid;
-      mountName = actor.name;
-      mountImg = actor.img;
+    if (actor.type === "moto") {
+      mountUuid = actorUuid;
+      pilotUuid = actor.system?.reglas?.piloto_uuid || game.actors?.find(a => a.system?.mount?.uuid === actorUuid)?.uuid || null;
+    } else {
+      pilotUuid = actorUuid;
+      mountUuid = actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid || null;
     }
 
     const newParticipant = {
       id: foundry.utils.randomID(),
-      actorUuid: actor.uuid || actor.id,
+      actorUuid: pilotUuid || actorUuid,
+      mountUuid: mountUuid,
       name: actor.name,
       img: actor.img || "icons/svg/mystery-man.svg",
       type: actor.type,
       role: role,
       franja: Math.clamp(Number(franja) || 1, 1, current.franjasMax),
       isDriver: Boolean(isDriver),
-      mountUuid: mountUuid,
-      mountName: mountName,
-      mountImg: mountImg,
       status: [],
       iniciativa: 0,
       obstaculizadoMod: 0
