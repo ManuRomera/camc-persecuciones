@@ -4,7 +4,7 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Integrado 100% con CAMCMountRolls, YsystemDice, Moto Vinculada y Reglamento Oficial.
+ * Cumplimiento 100% riguroso con el manual oficial del juego y la configuración CONFIG.CAMC.persecucion.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   static get defaultOptions() {
@@ -36,6 +36,30 @@ export class CAMCChaseHUD extends ApplicationV1 {
       selected: String(v.mod) === String(state.visibilidad) || v.key === state.visibilidad
     }));
 
+    // Opciones de movimiento de CONFIG.CAMC.persecucion
+    const movimientosOptions = (config.movimiento || [
+      { key: "cambiar_posicion", label: "Cambiar de posición", mod: 0, summary: "Avanza 1 franja; 2 con crítico." },
+      { key: "mantener_posicion", label: "Mantener posición", mod: null, summary: "No requiere tirada; conserva la franja." },
+      { key: "obstaculizar", label: "Obstaculizar", mod: 2, summary: "Si vas 1 franja por delante, dificulta al perseguidor." },
+      { key: "quemar_rueda", label: "Quemar rueda", mod: 4, summary: "Avanza 2 franjas; 3 con crítico." }
+    ]).map(m => ({
+      ...m,
+      modText: m.mod !== null ? (m.mod >= 0 ? `+${m.mod} Dif` : `${m.mod} Dif`) : ""
+    }));
+
+    // Opciones de maniobra de CONFIG.CAMC.persecucion + maniobras de combate
+    const maniobrasOptions = [
+      ...(config.maniobras || [
+        { key: "embestir", label: "Embestir", mod: 0, summary: "Tirada enfrentada contra Evasión; causa daño de moto." },
+        { key: "arrollar", label: "Arrollar", mod: 0, summary: "Contra objetivo a pie; usa daño de moto." },
+        { key: "sacar_carretera", label: "Sacar de la carretera", mod: 3, summary: "Fuerza al rival a perder control o abandonar." },
+        { key: "evadirse", label: "Evadirse", mod: 0, summary: "Usa Conducir para ganar espacio o cortar persecución." }
+      ]),
+      { key: "atacar_directo", label: "Atacar directo", mod: 0, summary: "Ataque con arma; +5 a Evasión rival si eres piloto." },
+      { key: "atacar_estabilizando", label: "Atacar estabilizando", mod: 0, summary: "Pre-maniobra de Conducir; elimina el +5 a Evasión." },
+      { key: "chocar", label: "Chocar directamente", mod: 0, summary: "Misma franja; daño dual a ambas motos." }
+    ];
+
     const maxFranjas = state.franjasMax || 10;
     const franjasRunicas = [];
 
@@ -55,7 +79,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     }
 
-    // Enriquecer cada participante resolviendo la vinculación bidireccional entre Piloto y Moto
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
       const { pilotActor, motoActor } = await this._resolvePilotAndMoto(p);
 
@@ -64,7 +87,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
         const estVal = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
         const estMax = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
         const maniobrabilidad = Number(motoActor.system?.reglas?.maniobrabilidad ?? motoActor.system?.maniobrabilidad ?? 2);
-        const danoGrave = mountInfo ? mountInfo.danoGrave : (estVal > 0 && estVal <= Math.floor(estMax / 2));
+        const danoGrave = estVal > 0 && estVal <= Math.floor(estMax / 2);
 
         mountInfo = {
           actor: motoActor,
@@ -112,15 +135,14 @@ export class CAMCChaseHUD extends ApplicationV1 {
       baseDifficulty,
       terrenos,
       visibilidad,
+      movimientosOptions,
+      maniobrasOptions,
       franjasRunicas,
       perseguidores,
       perseguidos
     };
   }
 
-  /**
-   * Resuelve el par Piloto (Personaje/PNJ) y Moto de un participante.
-   */
   async _resolvePilotAndMoto(participant) {
     let mainActor = await this._getActor(participant.actorUuid);
     let mountActor = participant.mountUuid ? await this._getActor(participant.mountUuid) : null;
@@ -154,9 +176,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     return game.actors?.get(uuidOrId) || game.actors?.find(a => a.uuid === uuidOrId || a.id === uuidOrId) || null;
   }
 
-  /**
-   * Obtención dinámica de las clases de tirada del sistema CAMC.
-   */
   async _getSystemRollers() {
     let MountRollsCls = game.camc?.CAMCMountRolls || game.cuervosDeAsgard?.CAMCMountRolls;
     if (!MountRollsCls) {
@@ -270,7 +289,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
         const select = container.querySelector(`select.man-action-select[data-id="${id}"]`);
-        const maneuverKey = select ? select.value : "atacar_directo";
+        const maneuverKey = select ? select.value : "embestir";
         await this._executeManeuverRoll(id, maneuverKey);
       });
     });
@@ -299,7 +318,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- EJECUCIÓN DE MOVIMIENTO USANDO CAMCMountRolls.rollDrive DEL SISTEMA ---
+  // --- EJECUCIÓN RIGUROSA DE MOVIMIENTO SEGÚN EL MANUAL ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -340,7 +359,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     let result = null;
 
     if (motoActor && MountRollsCls) {
-      // Usar la función nativa del sistema Cuervos de Asgard que aplica Maniobrabilidad y Daño Grave automáticamente
+      // CAMCMountRolls.rollDrive aplica automáticamente la Maniobrabilidad de la moto y el penalizador por Daño Grave (-3)
       result = await MountRollsCls.rollDrive(pilotActor, motoActor, {
         label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${actionLabel}`,
         difficulty: targetDifficulty
@@ -372,7 +391,17 @@ export class CAMCChaseHUD extends ApplicationV1 {
       let delta = 1;
       if (actionKey === "quemar_rueda") delta = isCrit ? 3 : 2;
       else if (actionKey === "cambiar_posicion") delta = isCrit ? 2 : 1;
-      else if (actionKey === "obstaculizar") delta = 1;
+      else if (actionKey === "obstaculizar") {
+        delta = 1;
+        // Aplicar penalizador al perseguidor inmediato
+        const state = ChaseState.get();
+        const rival = state.participants.find(x => x.role !== participant.role && x.franja === participant.franja - 1);
+        if (rival) {
+          rival.obstaculizadoMod = isCrit ? 6 : 3;
+          await ChaseState.update({ participants: state.participants });
+          ui.notifications.info(`🛡️ ${participant.name} obstaculiza a ${rival.name} imponiendo +${rival.obstaculizadoMod} a su próxima tirada.`);
+        }
+      }
 
       await ChaseState.setParticipantFranja(participant.id, delta);
       ui.notifications.info(`ᚱ ${participant.name} (${participant.role === "pursuer" ? "Perseguidor" : "Perseguido"}) supera la tirada y avanza ${delta} franja(s).`);
@@ -381,7 +410,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- EJECUCIÓN DE MANIOBRAS ---
+  // --- EJECUCIÓN RIGUROSA DE MANIOBRAS OFICIALES ---
   async _executeManeuverRoll(participantId, maneuverKey) {
     const state = ChaseState.get();
     const attacker = state.participants.find(x => x.id === participantId);
@@ -400,9 +429,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
 
     const sameFranjaOpponents = opponents.filter(p => p.franja === attacker.franja);
-    const requiresSameFranja = ["chocar", "embestir", "abordar", "atrapar"].includes(maneuverKey);
+    const requiresSameFranja = ["chocar", "embestir", "arrollar", "sacar_carretera", "abordar"].includes(maneuverKey);
 
-    if (requiresSameFranja && !sameFranjaOpponents.length) {
+    if (requiresSameFranja && !sameFranjaOpponents.length && maneuverKey !== "evadirse") {
       ui.notifications.warn(`La maniobra '${maneuverKey}' requiere estar en la MISMA FRANJA (Franja ${attacker.franja}) que el objetivo.`);
       return;
     }
@@ -410,21 +439,27 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const availableTargets = requiresSameFranja ? sameFranjaOpponents : opponents;
     let targetParticipant = availableTargets[0];
 
-    if (availableTargets.length > 1) {
+    if (availableTargets.length > 1 && maneuverKey !== "evadirse") {
       targetParticipant = await this._promptTargetSelection(availableTargets, maneuverKey);
       if (!targetParticipant) return;
     }
 
-    const { pilotActor: targetActor, motoActor: targetMoto } = await this._resolvePilotAndMoto(targetParticipant);
+    const { pilotActor: targetActor, motoActor: targetMoto } = await this._resolvePilotAndMoto(targetParticipant || {});
 
-    if (maneuverKey === "atacar_directo") {
+    if (maneuverKey === "embestir") {
+      await this._resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state);
+    } else if (maneuverKey === "arrollar") {
+      await this._resolveOverrun(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
+    } else if (maneuverKey === "sacar_carretera") {
+      await this._resolveOffRoad(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
+    } else if (maneuverKey === "evadirse") {
+      await this._resolveEvade(attacker, attackerActor, attackerMoto, state);
+    } else if (maneuverKey === "atacar_directo") {
       await this._resolveDirectAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
     } else if (maneuverKey === "atacar_estabilizando") {
       await this._resolveStabilizedAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state);
     } else if (maneuverKey === "chocar") {
       await this._resolveCrash(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state);
-    } else if (maneuverKey === "embestir") {
-      await this._resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state);
     }
   }
 
@@ -455,6 +490,112 @@ export class CAMCChaseHUD extends ApplicationV1 {
         default: "confirm"
       }).render(true);
     });
+  }
+
+  // --- MANIOBRA: EMBESTIR (Oficial CONFIG.CAMC) ---
+  async _resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
+
+    const selfDmgRoll = await new Roll("1d6").evaluate({ async: true });
+    await this._applyDamageToTarget(attacker, attackerActor, selfDmgRoll.total);
+
+    const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
+    const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
+    const finalDifficulty = targetEvasion + 2 + visibMod;
+
+    let ramResult = null;
+    if (attackerMoto && MountRollsCls) {
+      ramResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Embestir a ${targetActor?.name}`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      ramResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: finalDifficulty,
+        labelName: `Embestir a ${targetActor?.name}`
+      });
+    }
+
+    if (ramResult && (ramResult.exito || ramResult.isSuccess)) {
+      const ramDmgRoll = await new Roll("2d6 - 1").evaluate({ async: true });
+      await this._applyDamageToTarget(targetParticipant, targetActor, Math.max(1, ramDmgRoll.total));
+    }
+  }
+
+  // --- MANIOBRA: ARROLLAR (Oficial CONFIG.CAMC) ---
+  async _resolveOverrun(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
+    const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
+    const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
+    const finalDifficulty = targetEvasion + visibMod;
+
+    let overrunResult = null;
+    if (attackerMoto && MountRollsCls) {
+      overrunResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Arrollar a objetivo a pie (${targetActor?.name})`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      overrunResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: finalDifficulty,
+        labelName: `Arrollar a ${targetActor?.name}`
+      });
+    }
+
+    if (overrunResult && (overrunResult.exito || overrunResult.isSuccess)) {
+      const dmgRoll = await new Roll("2d6").evaluate({ async: true });
+      await this._applyDamageToTarget(targetParticipant, targetActor, dmgRoll.total);
+    }
+  }
+
+  // --- MANIOBRA: SACAR DE LA CARRETERA (Oficial CONFIG.CAMC, Mod +3) ---
+  async _resolveOffRoad(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
+    const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
+    const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
+    const finalDifficulty = targetEvasion + 3 + visibMod;
+
+    let result = null;
+    if (attackerMoto && MountRollsCls) {
+      result = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: `Sacar de la carretera a ${targetActor?.name}`,
+        difficulty: finalDifficulty
+      });
+    } else if (YsystemDiceCls) {
+      result = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: finalDifficulty,
+        labelName: `Sacar de la carretera a ${targetActor?.name}`
+      });
+    }
+
+    if (result && (result.exito || result.isSuccess)) {
+      await ChaseState.setParticipantFranja(targetParticipant.id, -2);
+      ui.notifications.warn(`💥 ${targetActor?.name} pierde el control y retrocede 2 franjas fuera de la pista.`);
+    }
+  }
+
+  // --- MANIOBRA: EVADIRSE (Oficial CONFIG.CAMC) ---
+  async _resolveEvade(attacker, attackerActor, attackerMoto, state) {
+    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
+    const baseDiff = ChaseState.getBaseDifficulty(state);
+
+    let result = null;
+    if (attackerMoto && MountRollsCls) {
+      result = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
+        label: "Evadirse de la persecución",
+        difficulty: baseDiff
+      });
+    } else if (YsystemDiceCls) {
+      result = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
+        dificultad: baseDiff,
+        labelName: "Evadirse de la persecución"
+      });
+    }
+
+    if (result && (result.exito || result.isSuccess)) {
+      await ChaseState.setParticipantFranja(attacker.id, 1);
+      ui.notifications.info(`🟢 ${attackerActor.name} gana 1 franja de espacio con la maniobra Evadirse.`);
+    }
   }
 
   async _resolveDirectAttack(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
@@ -506,7 +647,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     if (stabResult && (stabResult.exito || stabResult.isSuccess)) {
       const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
       const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-      const finalDifficulty = targetEvasion + visibMod; // Sin penalizador +5 de piloto por haber estabilizado
+      const finalDifficulty = targetEvasion + visibMod;
 
       const attackResult = await YsystemDiceCls.rollSkill(attackerActor, "armas_fuego", {
         dificultad: finalDifficulty,
@@ -546,35 +687,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       await this._applyDamageToTarget(targetParticipant, targetActor, dmgRoll1.total);
       await this._applyDamageToTarget(attacker, attackerActor, dmgRoll2.total);
-    }
-  }
-
-  async _resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state) {
-    const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
-
-    const selfDmgRoll = await new Roll("1d6").evaluate({ async: true });
-    await this._applyDamageToTarget(attacker, attackerActor, selfDmgRoll.total);
-
-    const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
-    const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-    const finalDifficulty = targetEvasion + 2 + visibMod;
-
-    let ramResult = null;
-    if (attackerMoto && MountRollsCls) {
-      ramResult = await MountRollsCls.rollDrive(attackerActor, attackerMoto, {
-        label: `Embestir a ${targetActor?.name}`,
-        difficulty: finalDifficulty
-      });
-    } else if (YsystemDiceCls) {
-      ramResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
-        dificultad: finalDifficulty,
-        labelName: `Embestir a ${targetActor?.name}`
-      });
-    }
-
-    if (ramResult && (ramResult.exito || ramResult.isSuccess)) {
-      const ramDmgRoll = await new Roll("2d6 - 1").evaluate({ async: true });
-      await this._applyDamageToTarget(targetParticipant, targetActor, Math.max(1, ramDmgRoll.total));
     }
   }
 
