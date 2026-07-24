@@ -1,39 +1,26 @@
 import { ChaseState } from "../model/chase-state.mjs";
 
-const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo para el Control Visual de Persecuciones en Cuervos de Asgard MC.
  */
-export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
-  static DEFAULT_OPTIONS = {
-    id: "camc-chase-hud",
-    classes: ["camc", "camc-chase-window"],
-    tag: "div",
-    window: {
+export class CAMCChaseHUD extends ApplicationV1 {
+  static get defaultOptions() {
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      id: "camc-chase-hud",
+      classes: ["camc", "camc-chase-window"],
       title: "Control Visual de Persecuciones · Llanuras Yermas",
-      icon: "fas fa-flag-checkered",
-      resizable: true,
-      minimizable: true
-    },
-    position: {
+      template: "modules/camc-persecuciones/templates/chase-hud.hbs",
       width: 1020,
       height: 720,
-      top: 80,
-      left: 140
-    }
-  };
+      resizable: true,
+      minimizable: true
+    });
+  }
 
-  static PARTS = {
-    main: {
-      template: "modules/camc-persecuciones/templates/chase-hud.hbs"
-    }
-  };
-
-  /**
-   * Prepara los datos para la plantilla Handlebars.
-   */
-  async _prepareContext(_options) {
+  async getData(options) {
+    const data = await super.getData(options);
     const state = ChaseState.get();
     const isGM = game.user.isGM;
     const baseDifficulty = ChaseState.getBaseDifficulty(state);
@@ -66,9 +53,14 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     }
 
-    // Participantes enriquecidos con datos en tiempo real (Salud, Estructura de moto)
+    // Participantes enriquecidos con datos en tiempo real
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
-      const actor = await fromUuid(p.actorUuid);
+      let actor = null;
+      try {
+        actor = await fromUuid(p.actorUuid);
+      } catch (e) {
+        actor = null;
+      }
       let health = null;
       let driveSkill = 0;
       let agilidad = 0;
@@ -99,6 +91,7 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     const perseguidos = enrichedParticipants.filter(p => p.role === "evader");
 
     return {
+      ...data,
       state,
       isGM,
       baseDifficulty,
@@ -112,41 +105,39 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     };
   }
 
-  /**
-   * Configura listeners de eventos tras renderizar el HTML.
-   */
-  _onRender(context, options) {
-    super._onRender(context, options);
-    const html = this.element;
+  activateListeners(html) {
+    super.activateListeners(html);
+    const container = html[0] || html;
+    const isGM = game.user.isGM;
 
     // Drag & Drop para soltar actores/tokens en el HUD
-    html.addEventListener("dragover", ev => ev.preventDefault());
-    html.addEventListener("drop", ev => this._onDrop(ev));
+    container.addEventListener("dragover", ev => ev.preventDefault());
+    container.addEventListener("drop", ev => this._onDrop(ev));
 
     // Listeners del Game Master
-    if (context.isGM) {
+    if (isGM) {
       // Cambio de terreno
-      html.querySelectorAll(".change-terreno").forEach(select => {
+      container.querySelectorAll(".change-terreno").forEach(select => {
         select.addEventListener("change", async ev => {
           await ChaseState.update({ terreno: ev.target.value });
         });
       });
 
       // Cambio de visibilidad
-      html.querySelectorAll(".change-visibilidad").forEach(select => {
+      container.querySelectorAll(".change-visibilidad").forEach(select => {
         select.addEventListener("change", async ev => {
           await ChaseState.update({ visibilidad: ev.target.value });
         });
       });
 
       // Control de Turnos y Fases
-      html.querySelector(".btn-next-turn")?.addEventListener("click", async () => {
+      container.querySelector(".btn-next-turn")?.addEventListener("click", async () => {
         const state = ChaseState.get();
         await ChaseState.update({ turno: state.turno + 1 });
         ui.notifications.info(`Persecución: Inicio del Turno ${state.turno + 1}`);
       });
 
-      html.querySelector(".btn-reset-chase")?.addEventListener("click", async () => {
+      container.querySelector(".btn-reset-chase")?.addEventListener("click", async () => {
         const confirm = await Dialog.confirm({
           title: "Reiniciar Persecución",
           content: "<p>¿Estás seguro de reiniciar las franjas y turnos de la persecución?</p>"
@@ -157,7 +148,7 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
       });
 
       // Cambiar franja directamente por clic en la pista
-      html.querySelectorAll(".franja-cell").forEach(cell => {
+      container.querySelectorAll(".franja-cell").forEach(cell => {
         cell.addEventListener("click", async ev => {
           const targetFranja = Number(cell.dataset.franja);
           const selectedToken = canvas.tokens?.controlled[0];
@@ -173,7 +164,7 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // Botones de control de participantes (+1 / -1 Franja, Eliminar, Cambiar Rol)
-    html.querySelectorAll(".btn-move-franja").forEach(btn => {
+    container.querySelectorAll(".btn-move-franja").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
         const delta = Number(ev.currentTarget.dataset.delta);
@@ -181,14 +172,14 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
       });
     });
 
-    html.querySelectorAll(".btn-remove-participant").forEach(btn => {
+    container.querySelectorAll(".btn-remove-participant").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
         await ChaseState.removeParticipant(id);
       });
     });
 
-    html.querySelectorAll(".btn-toggle-role").forEach(btn => {
+    container.querySelectorAll(".btn-toggle-role").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
         const state = ChaseState.get();
@@ -201,7 +192,7 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     });
 
     // Lanzador de Tiradas de Movimiento
-    html.querySelectorAll(".btn-roll-movement").forEach(btn => {
+    container.querySelectorAll(".btn-roll-movement").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const actionKey = ev.currentTarget.dataset.action;
         const participantId = ev.currentTarget.dataset.participantId;
@@ -210,7 +201,7 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     });
 
     // Lanzador de Tiradas de Maniobra
-    html.querySelectorAll(".btn-roll-maneuver").forEach(btn => {
+    container.querySelectorAll(".btn-roll-maneuver").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const maneuverKey = ev.currentTarget.dataset.maneuver;
         const participantId = ev.currentTarget.dataset.participantId;
@@ -219,9 +210,6 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     });
   }
 
-  /**
-   * Manejo de Drag & Drop de actores/tokens al panel.
-   */
   async _onDrop(event) {
     event.preventDefault();
     let data;
@@ -245,9 +233,6 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     }
   }
 
-  /**
-   * Ejecuta una tirada de Movimiento integrada con el sistema Cuervos de Asgard.
-   */
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -263,7 +248,6 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     const movConfig = CONFIG.CAMC?.persecucion?.movimiento?.find(m => m.key === actionKey);
     const actionMod = movConfig?.mod ?? 0;
 
-    // Caso especial: Mantener posición
     if (actionKey === "mantener_posicion") {
       ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
@@ -282,13 +266,11 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const finalDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
 
-    // Tirada de conducción de moto si tiene montura o tirada normal
     let mountActor = null;
     if (p.mount?.uuid) {
       mountActor = await fromUuid(p.mount.uuid);
     }
 
-    // Invocación a tiradas del sistema CAMC
     if (mountActor && game.cuervosDeAsgard?.CAMCMountRolls) {
       const result = await game.cuervosDeAsgard.CAMCMountRolls.rollDrive(actor, mountActor, {
         label: `Persecución: ${movConfig?.label || actionKey}`,
@@ -296,7 +278,6 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
       });
       this._handleMovementResult(p, actionKey, result);
     } else {
-      // Tirada básica de Conducir / Atletismo vía YsystemDice
       const skillName = actor.system?.habilidades?.conducir ? "conducir" : "atletismo";
       if (game.cuervosDeAsgard?.YsystemDice) {
         const result = await game.cuervosDeAsgard.YsystemDice.rollSkill(actor, skillName, {
@@ -305,20 +286,16 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
         });
         this._handleMovementResult(p, actionKey, result);
       } else {
-        ui.notifications.warn("Tirada realizada con modificador total de dificultad: " + finalDifficulty);
+        ui.notifications.warn("Tirada realizada con dificultad total: " + finalDifficulty);
       }
     }
 
-    // Limpiar modificador de obstaculizado tras la tirada de movimiento
     if (p.obstaculizadoMod > 0) {
       p.obstaculizadoMod = 0;
       await ChaseState.update({ participants: state.participants }, { broadcast: false });
     }
   }
 
-  /**
-   * Procesa el resultado de movimiento para avanzar franjas de forma inteligente.
-   */
   async _handleMovementResult(participant, actionKey, rollResult) {
     if (!rollResult) return;
     const isSuccess = rollResult.isSuccess || rollResult.exito;
@@ -335,9 +312,6 @@ export class CAMCChaseHUD extends HandlebarsApplicationMixin(ApplicationV2) {
     }
   }
 
-  /**
-   * Ejecuta una tirada de Maniobra de Persecución.
-   */
   async _executeManeuverRoll(participantId, maneuverKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
