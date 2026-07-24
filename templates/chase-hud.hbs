@@ -1,13 +1,13 @@
 <div class="camc-chase-container runic-biker-theme">
   
-  {{!-- HEADER: BANNER VIKINGO-MOTERO CON RUNAS --}}
+  {{!-- HEADER: TITULO Y CONTROLES GM --}}
   <header class="camc-chase-header">
     <div class="camc-chase-title-box">
       <h2><span class="rune-icon">ᚱ</span> CONTROL VISUAL DE PERSECUCIÓN <span class="rune-icon">ᛏ</span></h2>
       <span class="camc-chase-subtitle">CUERVOS DE ASGARD MOTOR CLUB · CARRETERA Y YERMOS</span>
     </div>
 
-    {{!-- DASHBOARD RÚNICO DE TERRENO Y VISIBILIDAD --}}
+    {{!-- DASHBOARD DE TERRENO Y VISIBILIDAD --}}
     <div class="camc-chase-dashboard">
       <div class="camc-dashboard-tile">
         <label><i class="fas fa-mountain"></i> Terreno ᚠ</label>
@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      {{!-- MULTIJUGADOR Y CONTROLES GM --}}
+      {{!-- CONTROLES GM Y MULTIJUGADOR --}}
       <div class="camc-dashboard-tile controls">
         <label><i class="fas fa-users"></i> Multijugador</label>
         <div class="camc-btn-group">
@@ -59,7 +59,7 @@
     </div>
   </header>
 
-  {{!-- BANDA DE FASES DEL TURNO (GUIÓN PASO A PASO) --}}
+  {{!-- BANDA DE FASES DEL TURNO --}}
   <div class="camc-phase-bar">
     <div class="phase-step {{#if (eq state.fase 'iniciativa')}}active{{/if}}" data-fase="iniciativa">
       <span class="phase-rune">ᛏ</span> 1. INICIATIVA
@@ -70,95 +70,13 @@
     </div>
     <div class="phase-arrow">➔</div>
     <div class="phase-step {{#if (eq state.fase 'movimiento')}}active{{/if}}" data-fase="movimiento">
-      <span class="phase-rune">⚡</span> 3. MOVIMIENTO (Orden Iniciativa)
+      <span class="phase-rune">⚡</span> 3. MOVIMIENTO (Todos tiran)
     </div>
     <div class="phase-arrow">➔</div>
     <div class="phase-step {{#if (eq state.fase 'maniobra')}}active{{/if}}" data-fase="maniobra">
       <span class="phase-rune">⚔️</span> 4. MANIOBRAS Y ATAQUES
     </div>
   </div>
-
-  {{!-- CONSOLA HEROICA DE TIRADAS DE DADOS RÚNICOS --}}
-  <section class="camc-dice-console runic-console">
-    <div class="console-header">
-      <h3><span class="rune-symbol">ᛏ</span> CONSOLA DE TIRADAS Y COMANDO RÚNICO <span class="rune-symbol">ᚱ</span></h3>
-      <span class="console-hint">Selecciona tu acción y presiona el botón gigante de dados para tirar en Foundry</span>
-    </div>
-
-    <div class="console-body">
-      {{!-- PASO 1: TIRADA DE MOVIMIENTO --}}
-      <div class="console-step-box movement-box">
-        <div class="step-title">
-          <span class="step-number">PASO 1</span>
-          <h4><i class="fas fa-tachometer-alt"></i> ᚱ TIRAR MOVIMIENTO (AVANZAR EN LA PISTA)</h4>
-        </div>
-
-        <div class="action-selector">
-          <label class="action-radio">
-            <input type="radio" name="selected-mov-action" value="cambiar_posicion" checked />
-            <span class="radio-pill">🟢 Normal (+0 Dif) · Avanza 1 Franja</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-mov-action" value="quemar_rueda" />
-            <span class="radio-pill danger">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-mov-action" value="obstaculizar" />
-            <span class="radio-pill warning">🛡️ Obstaculizar (+2 Dif) · Penaliza Rival</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-mov-action" value="mantener_posicion" />
-            <span class="radio-pill">⏸️ Mantener Posición (Sin tirada)</span>
-          </label>
-        </div>
-
-        {{!-- BOTÓN GIGANTE RÚNICO DE DADOS DE MOVIMIENTO --}}
-        <button type="button" class="btn-giant-roll roll-movement-giant runic-btn">
-          <span class="big-rune">ᚱ</span>
-          <div class="btn-text">
-            <strong>¡TIRAR DADOS DE CONDUCCIÓN / MOVIMIENTO!</strong>
-            <small>Dificultad objetivo: D<span class="current-diff-display">{{baseDifficulty}}</span> (Avanza automáticamente si supera)</small>
-          </div>
-        </button>
-      </div>
-
-      {{!-- PASO 2: TIRADA DE MANIOBRA / ATAQUE --}}
-      <div class="console-step-box maneuver-box">
-        <div class="step-title">
-          <span class="step-number">PASO 2</span>
-          <h4><i class="fas fa-crosshairs"></i> ᛏ TIRAR MANIOBRA O ATAQUE TÁCTICO</h4>
-        </div>
-
-        <div class="action-selector">
-          <label class="action-radio">
-            <input type="radio" name="selected-man-action" value="atacar_directo" checked />
-            <span class="radio-pill">⚔️ Atacar Directo</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-man-action" value="atacar_estabilizando" />
-            <span class="radio-pill">⚖️ Estabilizar y Atacar</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-man-action" value="chocar" />
-            <span class="radio-pill danger">💥 Chocar Vehículos</span>
-          </label>
-          <label class="action-radio">
-            <input type="radio" name="selected-man-action" value="embestir" />
-            <span class="radio-pill danger">🚙 Embestir</span>
-          </label>
-        </div>
-
-        {{!-- BOTÓN GIGANTE RÚNICO DE MANIOBRA --}}
-        <button type="button" class="btn-giant-roll roll-maneuver-giant runic-btn danger">
-          <span class="big-rune">ᛏ</span>
-          <div class="btn-text">
-            <strong>¡TIRAR MANIOBRA / ATAQUE!</strong>
-            <small>Genera la tarjeta de combate y daño en el chat</small>
-          </div>
-        </button>
-      </div>
-    </div>
-  </section>
 
   {{!-- PISTA TÁCTICA DE FRANJAS RÚNICAS (1 A 10) --}}
   <section class="camc-chase-track-section">
@@ -173,7 +91,7 @@
         <div class="franja-cell {{#if this.isEscape}}escape-cell{{/if}} {{#if this.isStart}}start-cell{{/if}}" data-franja="{{this.numero}}">
           <div class="franja-number-badge"><span class="cell-rune">{{this.rune}}</span> {{this.numero}}</div>
 
-          {{!-- PERSEGUIDORES EN ESTA FRANJA (PARTE SUPERIOR - AMENAZA NÓRDICA) --}}
+          {{!-- PERSEGUIDORES EN ESTA FRANJA (SUPERIOR) --}}
           <div class="franja-slot pursuers-slot">
             {{#each this.pursuers}}
               <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguidor - Franja {{this.franja}})">
@@ -185,7 +103,7 @@
 
           <div class="franja-divider runic-divider"></div>
 
-          {{!-- PERSEGUIDOS EN ESTA FRANJA (PARTE INFERIOR - CUERVOS) --}}
+          {{!-- PERSEGUIDOS EN ESTA FRANJA (INFERIOR) --}}
           <div class="franja-slot evaders-slot">
             {{#each this.evaders}}
               <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguido - Franja {{this.franja}})">
@@ -199,9 +117,10 @@
     </div>
   </section>
 
-  {{!-- PANEL INFERIOR DE ROSTER --}}
+  {{!-- ROSTER COMPLETO DE CONTENDIENTES (PERSEGUIDOS Y PERSEGUIDORES CON SUS PROPIAS ACCIONES DE TIRADA DE DADOS) --}}
   <main class="camc-chase-roster-grid">
-    {{!-- PERSEGUIDOS --}}
+    
+    {{!-- COLUMNA DE PERSEGUIDOS --}}
     <div class="camc-roster-column evaders-column">
       <div class="roster-header evader">
         <h3><i class="fas fa-shield-alt"></i> PERSEGUIDOS / CUERVOS A LA FUGA ({{perseguidos.length}})</h3>
@@ -229,6 +148,46 @@
                 {{/if}}
               </div>
             </div>
+
+            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES PARA ESTE PERSEGUIDO --}}
+            {{#if this.isControlled}}
+              <div class="card-roll-panel">
+                
+                {{!-- MOVIMIENTO --}}
+                <div class="roll-subgroup">
+                  <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
+                  <div class="roll-row">
+                    <select class="mov-action-select" data-id="{{this.id}}">
+                      <option value="cambiar_posicion">🟢 Normal (Mod +0) · Avanza 1 Franja</option>
+                      <option value="quemar_rueda">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</option>
+                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza al Rival</option>
+                      <option value="mantener_posicion">⏸️ Mantener Posición (Sin tirada)</option>
+                    </select>
+                    <button type="button" class="btn-card-roll btn-roll-mov-direct" data-id="{{this.id}}">
+                      <i class="fas fa-dice-d20"></i> TIRAR DADOS CONDUCCIÓN
+                    </button>
+                  </div>
+                </div>
+
+                {{!-- MANIOBRA --}}
+                <div class="roll-subgroup">
+                  <label><i class="fas fa-crosshairs"></i> Maniobra / Ataque Táctico</label>
+                  <div class="roll-row">
+                    <select class="man-action-select" data-id="{{this.id}}">
+                      <option value="atacar_directo">⚔️ Atacar Directo</option>
+                      <option value="atacar_estabilizando">⚖️ Estabilizar y Atacar</option>
+                      <option value="chocar">💥 Chocar Vehículos</option>
+                      <option value="embestir">🚙 Embestir</option>
+                    </select>
+                    <button type="button" class="btn-card-roll btn-roll-man-direct danger" data-id="{{this.id}}">
+                      <i class="fas fa-crosshairs"></i> TIRAR MANIOBRA
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            {{/if}}
+
           </div>
         {{else}}
           <div class="empty-roster">
@@ -238,7 +197,7 @@
       </div>
     </div>
 
-    {{!-- PERSEGUIDORES --}}
+    {{!-- COLUMNA DE PERSEGUIDORES --}}
     <div class="camc-roster-column pursuers-column">
       <div class="roster-header pursuer">
         <h3><i class="fas fa-fire"></i> PERSEGUIDORES / AMENAZA NÓRDICA ({{perseguidores.length}})</h3>
@@ -266,6 +225,46 @@
                 {{/if}}
               </div>
             </div>
+
+            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES PARA ESTE PERSEGUIDOR --}}
+            {{#if this.isControlled}}
+              <div class="card-roll-panel">
+                
+                {{!-- MOVIMIENTO --}}
+                <div class="roll-subgroup">
+                  <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
+                  <div class="roll-row">
+                    <select class="mov-action-select" data-id="{{this.id}}">
+                      <option value="cambiar_posicion">🟢 Normal (Mod +0) · Avanza 1 Franja</option>
+                      <option value="quemar_rueda">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</option>
+                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza al Rival</option>
+                      <option value="mantener_posicion">⏸️ Mantener Posición (Sin tirada)</option>
+                    </select>
+                    <button type="button" class="btn-card-roll btn-roll-mov-direct" data-id="{{this.id}}">
+                      <i class="fas fa-dice-d20"></i> TIRAR DADOS CONDUCCIÓN
+                    </button>
+                  </div>
+                </div>
+
+                {{!-- MANIOBRA --}}
+                <div class="roll-subgroup">
+                  <label><i class="fas fa-crosshairs"></i> Maniobra / Ataque Táctico</label>
+                  <div class="roll-row">
+                    <select class="man-action-select" data-id="{{this.id}}">
+                      <option value="atacar_directo">⚔️ Atacar Directo</option>
+                      <option value="atacar_estabilizando">⚖️ Estabilizar y Atacar</option>
+                      <option value="chocar">💥 Chocar Vehículos</option>
+                      <option value="embestir">🚙 Embestir</option>
+                    </select>
+                    <button type="button" class="btn-card-roll btn-roll-man-direct danger" data-id="{{this.id}}">
+                      <i class="fas fa-crosshairs"></i> TIRAR MANIOBRA
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            {{/if}}
+
           </div>
         {{else}}
           <div class="empty-roster">
@@ -274,6 +273,6 @@
         {{/each}}
       </div>
     </div>
-  </main>
 
+  </main>
 </div>

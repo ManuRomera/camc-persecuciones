@@ -1,8 +1,8 @@
 /* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCIONES - ESTILO VIKINGO-MOTERO (CUERVOS DE ASGARD MC) */
 
 .camc-chase-window {
-  min-width: 920px;
-  min-height: 640px;
+  min-width: 960px;
+  min-height: 680px;
 }
 
 .camc-chase-window .window-header {
@@ -137,7 +137,7 @@
   filter: brightness(1.2);
 }
 
-/* BANDA DE FASES DEL TURNO (PASO A PASO GUIADO) */
+/* BANDA DE FASES DEL TURNO */
 .camc-phase-bar {
   display: flex;
   align-items: center;
@@ -181,173 +181,6 @@
 .phase-arrow {
   color: #444c4e;
   font-size: 12px;
-}
-
-/* CONSOLA HEROICA DE DADOS RÚNICOS */
-.camc-dice-console.runic-console {
-  background: linear-gradient(180deg, rgba(24, 29, 30, 0.98), rgba(12, 15, 16, 0.98));
-  border: 2px solid var(--camc-cyan, #02d6e7);
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 0 20px rgba(2, 214, 231, 0.28), inset 0 0 12px rgba(0, 0, 0, 0.6);
-}
-
-.console-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(2, 214, 231, 0.3);
-  padding-bottom: 6px;
-  margin-bottom: 10px;
-}
-
-.console-header h3 {
-  margin: 0;
-  font-family: CAMCHead, "Arial Narrow", sans-serif;
-  font-size: 18px;
-  letter-spacing: 0.08em;
-  color: #fff;
-  border: none;
-}
-
-.console-hint {
-  font-size: 11px;
-  color: #a8b0b2;
-}
-
-.console-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.console-step-box {
-  background: rgba(8, 11, 12, 0.88);
-  border: 1px solid #343c3e;
-  border-radius: 6px;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.step-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.step-number {
-  background: var(--camc-cyan, #02d6e7);
-  color: #000;
-  font-weight: bold;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
-.maneuver-box .step-number {
-  background: var(--camc-copper, #e57922);
-}
-
-.step-title h4 {
-  margin: 0;
-  font-family: CAMCHead, sans-serif;
-  font-size: 14px;
-  color: #fff;
-  border: none;
-}
-
-.action-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.action-radio {
-  cursor: pointer;
-}
-
-.action-radio input {
-  display: none;
-}
-
-.radio-pill {
-  display: block;
-  font-size: 10px;
-  font-weight: bold;
-  text-align: center;
-  padding: 6px 4px;
-  border: 1px solid #3c4446;
-  background: #111516;
-  border-radius: 4px;
-  color: #ccc;
-  transition: all 0.2s ease;
-}
-
-.action-radio input:checked + .radio-pill {
-  border-color: var(--camc-cyan, #02d6e7);
-  background: rgba(2, 214, 231, 0.18);
-  color: #fff;
-  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
-}
-
-.action-radio input:checked + .radio-pill.danger {
-  border-color: var(--camc-copper, #e57922);
-  background: rgba(229, 121, 34, 0.2);
-}
-
-/* BOTONES GIGANTES DE TIRADA DE DADOS CON RUNAS */
-.btn-giant-roll.runic-btn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 14px !important;
-  background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
-  color: #000 !important;
-  border: 2px solid #fff !important;
-  border-radius: 6px !important;
-  padding: 10px 14px !important;
-  cursor: pointer !important;
-  box-shadow: 0 0 15px rgba(2, 214, 231, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  transition: transform 0.15s ease, filter 0.15s ease;
-  margin-top: 4px;
-}
-
-.btn-giant-roll.runic-btn:hover {
-  transform: scale(1.02);
-  filter: brightness(1.15);
-  box-shadow: 0 0 22px rgba(2, 214, 231, 0.7);
-}
-
-.btn-giant-roll.runic-btn.danger {
-  background: linear-gradient(180deg, #e57922, #a64d08) !important;
-  color: #fff !important;
-  box-shadow: 0 0 15px rgba(229, 121, 34, 0.5);
-}
-
-.big-rune {
-  font-size: 32px;
-  font-weight: bold;
-  line-height: 1;
-}
-
-.btn-text {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.btn-text strong {
-  font-family: CAMCHead, sans-serif;
-  font-size: 15px;
-  letter-spacing: 0.05em;
-  line-height: 1.2;
-}
-
-.btn-text small {
-  font-size: 11px;
-  opacity: 0.9;
 }
 
 /* PISTA TÁCTICA DE FRANJAS RÚNICAS (1 A 10) */
@@ -497,7 +330,7 @@
   border-color: var(--camc-copper, #e57922);
 }
 
-/* ROSTER INFERIOR */
+/* ROSTER INFERIOR DE TARJETAS CON TIRADAS INDEPENDIENTES */
 .camc-chase-roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -621,6 +454,69 @@
   font-size: 16px;
   min-width: 18px;
   text-align: center;
+}
+
+/* PANEL INDIVIDUAL DE DADOS EN CADA TARJETA */
+.card-roll-panel {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roll-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.roll-subgroup label {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--camc-muted, #a6a099);
+  font-weight: 800;
+}
+
+.roll-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 6px;
+  align-items: center;
+}
+
+.mov-action-select, .man-action-select {
+  background: #090c0d !important;
+  border: 1px solid #3c4446 !important;
+  color: #fff !important;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 4px;
+}
+
+.btn-card-roll {
+  background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
+  color: #000 !important;
+  font-weight: 800 !important;
+  font-size: 10px !important;
+  border: 1px solid #fff !important;
+  border-radius: 4px !important;
+  padding: 6px !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+  box-shadow: 0 0 8px rgba(2, 214, 231, 0.4);
+}
+
+.btn-card-roll:hover {
+  filter: brightness(1.2);
+}
+
+.btn-card-roll.danger {
+  background: linear-gradient(180deg, #e57922, #a64d08) !important;
+  color: #fff !important;
+  border-color: #ffc082 !important;
+  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
 }
 
 .empty-roster {

@@ -12,8 +12,8 @@ export class CAMCChaseHUD extends ApplicationV1 {
       classes: ["camc", "camc-chase-window", "camc-runic-theme"],
       title: "ᚱ Control Visual de Persecuciones · Cuervos de Asgard ᛏ",
       template: "modules/camc-persecuciones/templates/chase-hud.hbs",
-      width: 1060,
-      height: 780,
+      width: 1080,
+      height: 820,
       resizable: true,
       minimizable: true
     });
@@ -55,12 +55,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
 
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
-      let actor = null;
-      try {
-        actor = await fromUuid(p.actorUuid);
-      } catch (e) {
-        actor = null;
-      }
+      const actor = await this._getActor(p.actorUuid);
       return {
         ...p,
         actor,
@@ -82,6 +77,22 @@ export class CAMCChaseHUD extends ApplicationV1 {
       perseguidores,
       perseguidos
     };
+  }
+
+  /**
+   * Obtención ultra-robusta de actores de Foundry VTT por UUID o ID.
+   */
+  async _getActor(uuidOrId) {
+    if (!uuidOrId) return null;
+    try {
+      if (uuidOrId.startsWith("Actor.") || uuidOrId.startsWith("Compendium.") || uuidOrId.startsWith("Scene.")) {
+        const doc = await fromUuid(uuidOrId);
+        return doc?.actor || doc;
+      }
+    } catch (e) {
+      // Ignorar fallo de fromUuid y reintentar con game.actors
+    }
+    return game.actors?.get(uuidOrId) || game.actors?.find(a => a.uuid === uuidOrId || a.id === uuidOrId) || null;
   }
 
   activateListeners(html) {
@@ -163,45 +174,25 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // BOTÓN GIGANTE DE TIRADA DE MOVIMIENTO (PASO 1)
-    container.querySelector(".roll-movement-giant")?.addEventListener("click", async () => {
-      const selectedAction = container.querySelector('input[name="selected-mov-action"]:checked')?.value || "cambiar_posicion";
-      const activeParticipant = this._getActiveParticipant();
-      if (!activeParticipant) {
-        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar.");
-        return;
-      }
-      await this._executeMovementRoll(activeParticipant.id, selectedAction);
+    // BOTONES DIRECTOS DE TIRADA DE MOVIMIENTO (PERSEGUIDORES Y PERSEGUIDOS)
+    container.querySelectorAll(".btn-roll-mov-direct").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        const id = ev.currentTarget.dataset.id;
+        const select = container.querySelector(`select.mov-action-select[data-id="${id}"]`);
+        const actionKey = select ? select.value : "cambiar_posicion";
+        await this._executeMovementRoll(id, actionKey);
+      });
     });
 
-    // BOTÓN GIGANTE DE TIRADA DE MANIOBRA (PASO 2)
-    container.querySelector(".roll-maneuver-giant")?.addEventListener("click", async () => {
-      const selectedManeuver = container.querySelector('input[name="selected-man-action"]:checked')?.value || "atacar_directo";
-      const activeParticipant = this._getActiveParticipant();
-      if (!activeParticipant) {
-        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar.");
-        return;
-      }
-      await this._executeManeuverRoll(activeParticipant.id, selectedManeuver);
+    // BOTONES DIRECTOS DE TIRADA DE MANIOBRA (PERSEGUIDORES Y PERSEGUIDOS)
+    container.querySelectorAll(".btn-roll-man-direct").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        const id = ev.currentTarget.dataset.id;
+        const select = container.querySelector(`select.man-action-select[data-id="${id}"]`);
+        const maneuverKey = select ? select.value : "atacar_directo";
+        await this._executeManeuverRoll(id, maneuverKey);
+      });
     });
-  }
-
-  _getActiveParticipant() {
-    const state = ChaseState.get();
-    if (!state.participants.length) return null;
-
-    const selectedToken = canvas.tokens?.controlled[0];
-    if (selectedToken?.actor) {
-      const found = state.participants.find(p => p.actorUuid === selectedToken.actor.uuid);
-      if (found) return found;
-    }
-
-    const userOwned = state.participants.find(p => {
-      const actor = game.actors?.find(a => a.uuid === p.actorUuid);
-      return actor ? actor.isOwner : false;
-    });
-
-    return userOwned || state.participants[0];
   }
 
   async _onDrop(event) {
@@ -215,7 +206,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     let actor = null;
     if (data.type === "Actor") {
-      actor = await fromUuid(data.uuid);
+      actor = await this._getActor(data.uuid);
     } else if (data.type === "Token") {
       const token = await fromUuid(data.uuid);
       actor = token?.actor;
@@ -232,8 +223,11 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const p = state.participants.find(x => x.id === participantId);
     if (!p) return;
 
-    const actor = await fromUuid(p.actorUuid);
-    if (!actor) return;
+    const actor = await this._getActor(p.actorUuid);
+    if (!actor) {
+      ui.notifications.error(`No se encontró el actor para ${p.name}`);
+      return;
+    }
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
     const movConfig = CONFIG.CAMC?.persecucion?.movimiento?.find(m => m.key === actionKey);
@@ -246,7 +240,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
           <div class="camc-chat-card">
             <header>
               <h3><i class="fas fa-tachometer-alt"></i> Movimiento Rúnico</h3>
-              <strong>${actor.name}</strong>
+              <strong>${actor.name} (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"})</strong>
             </header>
             <p><b>Mantener posición:</b> Conserva la Franja ${p.franja} sin realizar tirada.</p>
           </div>
@@ -257,28 +251,41 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     const finalDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
 
-    let mountActor = null;
-    if (p.mount?.uuid) {
-      mountActor = await fromUuid(p.mount.uuid);
+    // Obtener clase de tiradas del sistema CAMC
+    let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
+    if (!YsystemDiceCls) {
+      try {
+        const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
+        YsystemDiceCls = mod.YsystemDice;
+      } catch (e) {
+        console.error("CAMC Persecuciones | Error importando YsystemDice:", e);
+      }
     }
 
+    let mountActor = null;
+    if (p.mount?.uuid) {
+      mountActor = await this._getActor(p.mount.uuid);
+    }
+
+    let result = null;
+
     if (mountActor && game.cuervosDeAsgard?.CAMCMountRolls) {
-      const result = await game.cuervosDeAsgard.CAMCMountRolls.rollDrive(actor, mountActor, {
-        label: `Persecución: ${movConfig?.label || actionKey}`,
+      result = await game.cuervosDeAsgard.CAMCMountRolls.rollDrive(actor, mountActor, {
+        label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey}`,
         difficulty: finalDifficulty
       });
-      this._handleMovementResult(p, actionKey, result);
-    } else {
+    } else if (YsystemDiceCls) {
       const skillName = actor.system?.habilidades?.conducir ? "conducir" : "atletismo";
-      if (game.cuervosDeAsgard?.YsystemDice) {
-        const result = await game.cuervosDeAsgard.YsystemDice.rollSkill(actor, skillName, {
-          dificultad: finalDifficulty,
-          labelName: `Persecución: ${movConfig?.label || actionKey}`
-        });
-        this._handleMovementResult(p, actionKey, result);
-      } else {
-        ui.notifications.warn("Tirada realizada con dificultad total: " + finalDifficulty);
-      }
+      result = await YsystemDiceCls.rollSkill(actor, skillName, {
+        dificultad: finalDifficulty,
+        labelName: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey}`
+      });
+    } else {
+      ui.notifications.info(`Tirada de ${actor.name} con dificultad total: ${finalDifficulty}`);
+    }
+
+    if (result) {
+      this._handleMovementResult(p, actionKey, result);
     }
 
     if (p.obstaculizadoMod > 0) {
@@ -299,7 +306,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
       else if (actionKey === "obstaculizar") delta = 1;
 
       await ChaseState.setParticipantFranja(participant.id, delta);
-      ui.notifications.info(`ᚱ ${participant.name} avanza ${delta} franja(s) en la persecución.`);
+      ui.notifications.info(`ᚱ ${participant.name} (${participant.role === "pursuer" ? "Perseguidor" : "Perseguido"}) supera la tirada y avanza ${delta} franja(s).`);
+    } else {
+      ui.notifications.warn(`ᚺ ${participant.name} no supera la tirada de movimiento y permanece en la Franja ${participant.franja}.`);
     }
   }
 
@@ -308,7 +317,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const p = state.participants.find(x => x.id === participantId);
     if (!p) return;
 
-    const actor = await fromUuid(p.actorUuid);
+    const actor = await this._getActor(p.actorUuid);
     if (!actor) return;
 
     const maneuverConfig = CONFIG.CAMC?.persecucion?.maniobras?.find(m => m.key === maneuverKey);
@@ -320,7 +329,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
         <div class="camc-chat-card">
           <header>
             <h3><i class="fas fa-crosshairs"></i> Maniobra Rúnica de Persecución</h3>
-            <strong>${actor.name}</strong>
+            <strong>${actor.name} (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"})</strong>
           </header>
           <p><b>${label}:</b> ${maneuverConfig?.summary || "Maniobra táctica en persecución."}</p>
         </div>
