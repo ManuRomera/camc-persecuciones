@@ -1,0 +1,464 @@
+/* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCCIONES - CUERVOS DE ASGARD MOTOR CLUB */
+
+.camc-chase-window {
+  min-width: 860px;
+  min-height: 580px;
+}
+
+.camc-chase-window .window-header {
+  background: linear-gradient(180deg, #14181a, #07090a);
+  border-bottom: 1px solid var(--camc-copper, #e57922);
+  color: #ede8dd;
+}
+
+.camc-chase-window .window-content {
+  background: #050607;
+  padding: 0;
+  overflow: hidden;
+}
+
+.camc-chase-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 12% 0%, rgba(2, 214, 231, 0.08), transparent 35%),
+    radial-gradient(circle at 88% 8%, rgba(229, 121, 34, 0.12), transparent 32%),
+    linear-gradient(145deg, #07090b, #121619 55%, #080a0c);
+  color: var(--camc-text, #ece8df);
+  padding: 12px;
+  gap: 12px;
+  overflow-y: auto;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+}
+
+/* HEADER Y DASHBOARD */
+.camc-chase-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: rgba(18, 21, 22, 0.92);
+  border: 1px solid #3e312a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);
+}
+
+.camc-chase-title-box h2 {
+  margin: 0;
+  font-family: CAMCHead, "Arial Narrow", sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5f2ec;
+  border: none;
+  padding: 0;
+}
+
+.camc-chase-title-box h2 i {
+  color: var(--camc-cyan, #02d6e7);
+  margin-right: 6px;
+}
+
+.camc-chase-subtitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--camc-muted, #a6a099);
+  letter-spacing: 0.06em;
+}
+
+.camc-chase-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.camc-dashboard-tile {
+  background: rgba(10, 13, 14, 0.85);
+  border: 1px solid #343c3e;
+  border-radius: 5px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+
+.camc-dashboard-tile label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--camc-muted, #a6a099);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.camc-dashboard-tile select {
+  background: #090c0d !important;
+  border: 1px solid #424a4c !important;
+  color: #fff !important;
+  border-radius: 3px;
+  font-size: 12px;
+  padding: 3px 5px;
+}
+
+.camc-dashboard-tile.highlight-diff {
+  border-color: var(--camc-cyan, #02d6e7);
+  background: rgba(2, 214, 231, 0.08);
+}
+
+.camc-diff-badge {
+  font-family: CAMCHead, "Arial Narrow", sans-serif;
+  font-size: 26px;
+  color: var(--camc-cyan, #02d6e7);
+  text-shadow: 0 0 10px rgba(2, 214, 231, 0.5);
+  line-height: 1;
+  text-align: center;
+}
+
+/* PISTA TÁCTICA DE FRANJAS */
+.camc-chase-track-section {
+  background: linear-gradient(180deg, rgba(16, 20, 21, 0.95), rgba(8, 10, 11, 0.98));
+  border: 1px solid #48392e;
+  border-radius: 6px;
+  padding: 10px 14px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.camc-track-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: CAMCHead, "Arial Narrow", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: #a89f95;
+  margin-bottom: 8px;
+}
+
+.camc-track-title {
+  color: var(--camc-copper, #e57922);
+  font-size: 14px;
+}
+
+.escape-text {
+  color: var(--camc-danger, #e04e2d);
+}
+
+.camc-chase-track {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  background: #080a0b;
+  border: 1px solid #333a3c;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.franja-cell {
+  position: relative;
+  background: linear-gradient(180deg, #15191b, #0d1011);
+  border: 1px solid #2d3436;
+  border-radius: 4px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.franja-cell:hover {
+  border-color: var(--camc-cyan, #02d6e7);
+  box-shadow: 0 0 10px rgba(2, 214, 231, 0.2);
+}
+
+.franja-number-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-family: CAMCHead, sans-serif;
+  font-size: 16px;
+  color: #4b5457;
+  pointer-events: none;
+}
+
+.start-cell {
+  border-left: 3px solid var(--camc-good, #58c477);
+}
+
+.escape-cell {
+  border-right: 3px solid var(--camc-danger, #e04e2d);
+  background: linear-gradient(180deg, rgba(224, 78, 45, 0.1), #0d1011);
+}
+
+.escape-cell .franja-number-badge {
+  color: var(--camc-danger, #e04e2d);
+}
+
+.franja-slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 48px;
+  align-content: flex-start;
+}
+
+.franja-divider {
+  height: 1px;
+  background: repeating-linear-gradient(90deg, #3d4548 0 4px, transparent 4px 8px);
+  margin: 4px 0;
+}
+
+/* AVATARES / TOKENS EN LA PISTA */
+.participant-token {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #4a5457;
+  border-radius: 12px;
+  padding: 2px 6px 2px 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+
+}
+
+.participant-token img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #fff;
+}
+
+.token-name {
+  font-size: 10px;
+  font-weight: 700;
+  max-width: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.evader-token {
+  border-color: var(--camc-cyan, #02d6e7);
+}
+
+.evader-token img {
+  border-color: var(--camc-cyan, #02d6e7);
+}
+
+.pursuer-token {
+  border-color: var(--camc-copper, #e57922);
+}
+
+.pursuer-token img {
+  border-color: var(--camc-copper, #e57922);
+}
+
+/* ROSTER DE PARTICIPANTES */
+.camc-chase-roster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.camc-roster-column {
+  background: rgba(14, 17, 18, 0.95);
+  border: 1px solid #384042;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.roster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #333a3c;
+  margin-bottom: 10px;
+}
+
+.roster-header h3 {
+  margin: 0;
+  font-family: CAMCHead, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  border: none;
+}
+
+.roster-header.evader h3 {
+  color: var(--camc-cyan, #02d6e7);
+}
+
+.roster-header.pursuer h3 {
+  color: var(--camc-copper, #e57922);
+}
+
+.badge-count {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participant-card {
+  background: linear-gradient(180deg, #181d1e, #0e1112);
+  border: 1px solid #333c3e;
+  border-radius: 5px;
+  padding: 8px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.evader-card {
+  border-left: 3px solid var(--camc-cyan, #02d6e7);
+}
+
+.pursuer-card {
+  border-left: 3px solid var(--camc-copper, #e57922);
+}
+
+.participant-head {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.participant-head .avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #3d4548;
+}
+
+.identity h4 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  color: #fff;
+  border: none;
+}
+
+.meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #384042;
+  color: #ccc;
+}
+
+.franja-tag {
+  border-color: var(--camc-cyan, #02d6e7);
+  color: var(--camc-cyan, #02d6e7);
+}
+
+.franja-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.franja-controls button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1c2224 !important;
+  border: 1px solid #434c4e !important;
+  color: #fff !important;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.franja-controls button:hover {
+  border-color: var(--camc-cyan, #02d6e7) !important;
+}
+
+.franja-val {
+  font-family: CAMCHead, sans-serif;
+  font-size: 18px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ACCIONES DE PARTICIPANTE */
+.participant-actions {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-group label {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--camc-muted, #a6a099);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 4px;
+}
+
+.btn-grid button {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 5px 6px;
+  background: linear-gradient(180deg, #202729, #101415) !important;
+  border: 1px solid #40484a !important;
+  color: #ece8df !important;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-grid button:hover {
+  border-color: var(--camc-cyan, #02d6e7) !important;
+  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
+}
+
+.btn-grid button.danger {
+  border-color: rgba(229, 121, 34, 0.6) !important;
+}
+
+.btn-grid button.danger:hover {
+  border-color: var(--camc-copper, #e57922) !important;
+  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
+}
+
+.empty-roster {
+  padding: 18px;
+  text-align: center;
+  color: #7b8487;
+  border: 1px dashed #343c3e;
+  border-radius: 5px;
+  font-size: 12px;
+}

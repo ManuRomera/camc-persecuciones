@@ -1,0 +1,36 @@
+{
+  "id": "camc-persecuciones",
+  "title": "Cuervos de Asgard MC · Control Visual de Persecuciones",
+  "description": "HUD interactivo y visual para controlar persecuciones en pantalla según el manual oficial de Cuervos de Asgard Motor Club.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13.351"
+  },
+  "authors": [
+    {
+      "name": "Manu Romera"
+    }
+  ],
+  "relationships": {
+    "systems": [
+      {
+        "id": "cuervos-de-asgard-mc",
+        "type": "system",
+        "compatibility": {
+          "minimum": "1.3.0"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "camc-persecuciones.mjs"
+  ],
+  "styles": [
+    "styles/camc-persecuciones.css"
+  ],
+  "url": "https://github.com/ManuRomera/camc-persecuciones",
+  "manifest": "https://raw.githubusercontent.com/ManuRomera/camc-persecuciones/main/module.json",
+  "download": "https://github.com/ManuRomera/camc-persecuciones/archive/refs/tags/v1.0.0.zip",
+  "readme": "README.md"
+}
