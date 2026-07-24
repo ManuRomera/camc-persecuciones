@@ -1,8 +1,8 @@
 /* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCCIONES - CUERVOS DE ASGARD MOTOR CLUB */
 
 .camc-chase-window {
-  min-width: 860px;
-  min-height: 580px;
+  min-width: 880px;
+  min-height: 620px;
 }
 
 .camc-chase-window .window-header {
@@ -30,7 +30,6 @@
   gap: 12px;
   overflow-y: auto;
   font-family: system-ui, -apple-system, sans-serif;
-  position: relative;
 }
 
 /* HEADER Y DASHBOARD */
@@ -40,7 +39,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: rgba(18, 21, 22, 0.92);
+  background: rgba(18, 21, 22, 0.95);
   border: 1px solid #3e312a;
   border-radius: 6px;
   padding: 10px 14px;
@@ -67,7 +66,9 @@
   font-size: 11px;
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-top: 2px;
 }
 
 .camc-chase-dashboard {
@@ -118,6 +119,195 @@
   text-align: center;
 }
 
+.btn-show-all {
+  background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  border: none !important;
+  padding: 5px 10px !important;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(2, 214, 231, 0.4);
+}
+
+.btn-show-all:hover {
+  filter: brightness(1.2);
+}
+
+/* CONSOLA HEROICA DE DADOS (ZONA SUPERIOR CLARA Y VISIBLE) */
+.camc-dice-console {
+  background: linear-gradient(180deg, rgba(22, 26, 27, 0.98), rgba(12, 15, 16, 0.98));
+  border: 2px solid var(--camc-cyan, #02d6e7);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 0 18px rgba(2, 214, 231, 0.25), inset 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.console-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(2, 214, 231, 0.3);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.console-header h3 {
+  margin: 0;
+  font-family: CAMCHead, "Arial Narrow", sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  border: none;
+}
+
+.console-header h3 i {
+  color: var(--camc-cyan, #02d6e7);
+  margin-right: 6px;
+}
+
+.console-hint {
+  font-size: 11px;
+  color: #a8b0b2;
+}
+
+.console-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.console-step-box {
+  background: rgba(8, 11, 12, 0.85);
+  border: 1px solid #343c3e;
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-number {
+  background: var(--camc-cyan, #02d6e7);
+  color: #000;
+  font-weight: bold;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.maneuver-box .step-number {
+  background: var(--camc-copper, #e57922);
+}
+
+.step-title h4 {
+  margin: 0;
+  font-family: CAMCHead, sans-serif;
+  font-size: 14px;
+  color: #fff;
+  border: none;
+}
+
+.action-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.action-radio {
+  cursor: pointer;
+}
+
+.action-radio input {
+  display: none;
+}
+
+.radio-pill {
+  display: block;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  padding: 6px 4px;
+  border: 1px solid #3c4446;
+  background: #111516;
+  border-radius: 4px;
+  color: #ccc;
+  transition: all 0.2s ease;
+}
+
+.action-radio input:checked + .radio-pill {
+  border-color: var(--camc-cyan, #02d6e7);
+  background: rgba(2, 214, 231, 0.18);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
+}
+
+.action-radio input:checked + .radio-pill.danger {
+  border-color: var(--camc-copper, #e57922);
+  background: rgba(229, 121, 34, 0.2);
+}
+
+/* BOTONES GIGANTES DE TIRADA DE DADOS */
+.btn-giant-roll {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
+  color: #000 !important;
+  border: 2px solid #fff !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 15px rgba(2, 214, 231, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  margin-top: 4px;
+}
+
+.btn-giant-roll:hover {
+  transform: scale(1.02);
+  filter: brightness(1.15);
+  box-shadow: 0 0 22px rgba(2, 214, 231, 0.7);
+}
+
+.btn-giant-roll.danger {
+  background: linear-gradient(180deg, #e57922, #a64d08) !important;
+  color: #fff !important;
+  box-shadow: 0 0 15px rgba(229, 121, 34, 0.5);
+}
+
+.btn-giant-roll.danger:hover {
+  box-shadow: 0 0 22px rgba(229, 121, 34, 0.7);
+}
+
+.btn-giant-roll i {
+  font-size: 28px;
+}
+
+.btn-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.btn-text strong {
+  font-family: CAMCHead, sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.btn-text small {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
 /* PISTA TÁCTICA DE FRANJAS */
 .camc-chase-track-section {
   background: linear-gradient(180deg, rgba(16, 20, 21, 0.95), rgba(8, 10, 11, 0.98));
@@ -162,7 +352,7 @@
   background: linear-gradient(180deg, #15191b, #0d1011);
   border: 1px solid #2d3436;
   border-radius: 4px;
-  min-height: 120px;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -203,7 +393,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  min-height: 48px;
+  min-height: 44px;
   align-content: flex-start;
 }
 
@@ -213,17 +403,16 @@
   margin: 4px 0;
 }
 
-/* AVATARES / TOKENS EN LA PISTA */
+/* AVATARES EN PISTA */
 .participant-token {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   border: 1px solid #4a5457;
   border-radius: 12px;
   padding: 2px 6px 2px 2px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-
 }
 
 .participant-token img {
@@ -231,7 +420,6 @@
   height: 22px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #fff;
 }
 
 .token-name {
@@ -259,7 +447,7 @@
   border-color: var(--camc-copper, #e57922);
 }
 
-/* ROSTER DE PARTICIPANTES */
+/* ROSTER INFERIOR */
 .camc-chase-roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -274,9 +462,6 @@
 }
 
 .roster-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding-bottom: 6px;
   border-bottom: 1px solid #333a3c;
   margin-bottom: 10px;
@@ -285,8 +470,7 @@
 .roster-header h3 {
   margin: 0;
   font-family: CAMCHead, sans-serif;
-  font-size: 16px;
-  letter-spacing: 0.08em;
+  font-size: 15px;
   border: none;
 }
 
@@ -298,18 +482,10 @@
   color: var(--camc-copper, #e57922);
 }
 
-.badge-count {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .participant-card {
@@ -317,7 +493,6 @@
   border: 1px solid #333c3e;
   border-radius: 5px;
   padding: 8px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
 }
 
 .evader-card {
@@ -330,22 +505,21 @@
 
 .participant-head {
   display: grid;
-  grid-template-columns: 42px 1fr auto;
+  grid-template-columns: 36px 1fr auto;
   gap: 8px;
   align-items: center;
 }
 
 .participant-head .avatar {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 4px;
   object-fit: cover;
-  border: 1px solid #3d4548;
 }
 
 .identity h4 {
-  margin: 0 0 3px;
-  font-size: 14px;
+  margin: 0 0 2px;
+  font-size: 13px;
   color: #fff;
   border: none;
 }
@@ -379,8 +553,8 @@
 }
 
 .franja-controls button {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -392,70 +566,15 @@
   cursor: pointer;
 }
 
-.franja-controls button:hover {
-  border-color: var(--camc-cyan, #02d6e7) !important;
-}
-
 .franja-val {
   font-family: CAMCHead, sans-serif;
-  font-size: 18px;
-  min-width: 20px;
+  font-size: 16px;
+  min-width: 18px;
   text-align: center;
 }
 
-/* ACCIONES DE PARTICIPANTE */
-.participant-actions {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.action-group label {
-  font-size: 9px;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: var(--camc-muted, #a6a099);
-  display: block;
-  margin-bottom: 4px;
-}
-
-.btn-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
-  gap: 4px;
-}
-
-.btn-grid button {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 5px 6px;
-  background: linear-gradient(180deg, #202729, #101415) !important;
-  border: 1px solid #40484a !important;
-  color: #ece8df !important;
-  border-radius: 3px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-grid button:hover {
-  border-color: var(--camc-cyan, #02d6e7) !important;
-  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
-}
-
-.btn-grid button.danger {
-  border-color: rgba(229, 121, 34, 0.6) !important;
-}
-
-.btn-grid button.danger:hover {
-  border-color: var(--camc-copper, #e57922) !important;
-  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
-}
-
 .empty-roster {
-  padding: 18px;
+  padding: 14px;
   text-align: center;
   color: #7b8487;
   border: 1px dashed #343c3e;

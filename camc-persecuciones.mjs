@@ -20,16 +20,21 @@ function toggleChaseHUD() {
   }
 }
 
+function openChaseHUD() {
+  if (!chaseHUDApp) {
+    chaseHUDApp = new CAMCChaseHUD();
+  }
+  chaseHUDApp.render(true);
+}
+
 // 1. INIT HOOK
 Hooks.once("init", async () => {
   console.log(`CAMC Persecuciones | Inicializando módulo de Control Visual para Foundry VTT v13`);
 
-  // Precargar la plantilla Handlebars
   await loadTemplates([
     `modules/${MODULE_ID}/templates/chase-hud.hbs`
   ]);
 
-  // Registrar setting para el estado persistente del mundo
   game.settings.register(MODULE_ID, ChaseState.SETTING_KEY, {
     name: "Estado Activo de Persecución",
     scope: "world",
@@ -42,12 +47,11 @@ Hooks.once("init", async () => {
       visibilidad: "normal",
       franjasMax: 10,
       turno: 1,
-      fase: "iniciativa",
+      fase: "movimiento",
       participants: []
     }
   });
 
-  // Registrar Menú en Configuración de la partida -> Ajustes del Módulo
   const FormAppCls = foundry.appv1?.api?.FormApplication || FormApplication;
   class CAMCChaseHUDMenu extends FormAppCls {
     render() {
@@ -64,7 +68,6 @@ Hooks.once("init", async () => {
     restricted: false
   });
 
-  // Keybinding (Alt + P)
   game.keybindings.register(MODULE_ID, "toggleChaseHUDKey", {
     name: "Abrir/Cerrar Control de Persecuciones",
     hint: "Alterna la visibilidad de la ventana de persecuciones.",
@@ -75,30 +78,31 @@ Hooks.once("init", async () => {
     }
   });
 
-  // Exponer API del módulo globalmente
   const moduleObj = game.modules.get(MODULE_ID);
   if (moduleObj) {
     moduleObj.api = {
       ChaseState,
       CAMCChaseHUD,
       toggleHUD: toggleChaseHUD,
+      openHUD: openChaseHUD,
       getHUD: () => chaseHUDApp
     };
   }
 });
 
-// 2. READY HOOK
+// 2. READY HOOK - SINCRONIZACIÓN Y APERTURA AUTOMÁTICA EN MULTIJUGADOR
 Hooks.once("ready", () => {
-  // Sockets para sincronización en tiempo real
   game.socket.on(`module.${MODULE_ID}`, async data => {
     if (!data || typeof data !== "object") return;
 
-    if (data.type === "REFRESH_CHASE_HUD") {
+    if (data.type === "OPEN_CHASE_HUD_ALL") {
+      openChaseHUD();
+    } else if (data.type === "REFRESH_CHASE_HUD") {
       if (chaseHUDApp && chaseHUDApp.rendered) {
         chaseHUDApp.render(false);
       }
     } else if (data.type === "UPDATE_CHASE_STATE" && game.user.isGM) {
-      await ChaseState.update(data.changes);
+      await ChaseState.update(data.changes, { showToAll: data.showToAll });
     }
   });
 
@@ -108,10 +112,10 @@ Hooks.once("ready", () => {
     }
   });
 
-  console.log(`CAMC Persecuciones | Listo.`);
+  console.log(`CAMC Persecuciones | Listo y sincronizado.`);
 });
 
-// 3. INTEGRACIÓN EN CONTROLES DE ESCENA (BARRA IZQUIERDA Y CATEGORÍA PROPIA)
+// 3. INTEGRACIÓN EN CONTROLES DE ESCENA
 Hooks.on("getSceneControlButtons", controls => {
   const chaseCategory = {
     name: "camc-persecuciones",
@@ -165,7 +169,7 @@ Hooks.on("getSceneControlButtons", controls => {
   }
 });
 
-// 4. INTEGRACIÓN EN EL COMBAT TRACKER (BARRA LATERAL DERECHA DE COMBATE)
+// 4. INTEGRACIÓN EN EL COMBAT TRACKER
 Hooks.on("renderCombatTracker", (app, html) => {
   const root = html[0] || html;
   if (root.querySelector(".camc-chase-sidebar-btn")) return;
@@ -198,4 +202,4 @@ Hooks.on("getActorSheetHeaderButtons", (sheet, buttons) => {
   });
 });
 
-export { ChaseState, CAMCChaseHUD, toggleChaseHUD };
+export { ChaseState, CAMCChaseHUD, toggleChaseHUD, openChaseHUD };

@@ -3,7 +3,7 @@ import { ChaseState } from "../model/chase-state.mjs";
 const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
- * HUD interactivo para el Control Visual de Persecuciones en Cuervos de Asgard MC.
+ * HUD interactivo y ultra-visual para el Control de Persecuciones en Cuervos de Asgard MC.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   static get defaultOptions() {
@@ -12,8 +12,8 @@ export class CAMCChaseHUD extends ApplicationV1 {
       classes: ["camc", "camc-chase-window"],
       title: "Control Visual de Persecuciones · Llanuras Yermas",
       template: "modules/camc-persecuciones/templates/chase-hud.hbs",
-      width: 1020,
-      height: 720,
+      width: 1040,
+      height: 760,
       resizable: true,
       minimizable: true
     });
@@ -25,7 +25,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const isGM = game.user.isGM;
     const baseDifficulty = ChaseState.getBaseDifficulty(state);
 
-    // Obtener listas de opciones del sistema CAMC
     const config = CONFIG.CAMC?.persecucion || {};
     const terrenos = (config.terrenos || []).map(t => ({
       ...t,
@@ -36,7 +35,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       selected: v.key === state.visibilidad
     }));
 
-    // Generar franjas (1 a 10) con sus participantes asignados
     const franjas = [];
     const maxFranjas = state.franjasMax || 10;
 
@@ -53,7 +51,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     }
 
-    // Participantes enriquecidos con datos en tiempo real
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
       let actor = null;
       try {
@@ -61,32 +58,13 @@ export class CAMCChaseHUD extends ApplicationV1 {
       } catch (e) {
         actor = null;
       }
-      let health = null;
-      let driveSkill = 0;
-      let agilidad = 0;
-
-      if (actor) {
-        agilidad = Number(actor.system?.atributos?.des ?? actor.system?.atributos?.agilidad ?? 0);
-        if (actor.type === "personaje" || actor.type === "pnj") {
-          health = {
-            value: Number(actor.system?.combate?.salud?.value ?? actor.system?.salud?.value ?? 10),
-            max: Number(actor.system?.combate?.salud?.max ?? actor.system?.salud?.max ?? 10)
-          };
-          driveSkill = Number(actor.system?.habilidades?.conducir?.valor ?? 0);
-        }
-      }
-
       return {
         ...p,
         actor,
-        health,
-        driveSkill,
-        agilidad,
         isControlled: actor ? actor.isOwner : isGM
       };
     }));
 
-    // Separar por roles
     const perseguidores = enrichedParticipants.filter(p => p.role === "pursuer");
     const perseguidos = enrichedParticipants.filter(p => p.role === "evader");
 
@@ -99,9 +77,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       visibilidad,
       franjas,
       perseguidores,
-      perseguidos,
-      movimientos: config.movimiento || [],
-      maniobras: config.maniobras || []
+      perseguidos
     };
   }
 
@@ -114,23 +90,26 @@ export class CAMCChaseHUD extends ApplicationV1 {
     container.addEventListener("dragover", ev => ev.preventDefault());
     container.addEventListener("drop", ev => this._onDrop(ev));
 
+    // Botón GM: Mostrar a todos los jugadores conectados
+    container.querySelector(".btn-show-all")?.addEventListener("click", async () => {
+      await ChaseState.showToAllPlayers();
+      ui.notifications.info("📢 Pantalla de persecución enviada a todos los jugadores.");
+    });
+
     // Listeners del Game Master
     if (isGM) {
-      // Cambio de terreno
       container.querySelectorAll(".change-terreno").forEach(select => {
         select.addEventListener("change", async ev => {
           await ChaseState.update({ terreno: ev.target.value });
         });
       });
 
-      // Cambio de visibilidad
       container.querySelectorAll(".change-visibilidad").forEach(select => {
         select.addEventListener("change", async ev => {
           await ChaseState.update({ visibilidad: ev.target.value });
         });
       });
 
-      // Control de Turnos y Fases
       container.querySelector(".btn-next-turn")?.addEventListener("click", async () => {
         const state = ChaseState.get();
         await ChaseState.update({ turno: state.turno + 1 });
@@ -143,27 +122,12 @@ export class CAMCChaseHUD extends ApplicationV1 {
           content: "<p>¿Estás seguro de reiniciar las franjas y turnos de la persecución?</p>"
         });
         if (confirm) {
-          await ChaseState.update({ turno: 1, fase: "iniciativa" });
+          await ChaseState.update({ turno: 1, fase: "movimiento" });
         }
-      });
-
-      // Cambiar franja directamente por clic en la pista
-      container.querySelectorAll(".franja-cell").forEach(cell => {
-        cell.addEventListener("click", async ev => {
-          const targetFranja = Number(cell.dataset.franja);
-          const selectedToken = canvas.tokens?.controlled[0];
-          if (selectedToken?.actor) {
-            const state = ChaseState.get();
-            const part = state.participants.find(p => p.actorUuid === selectedToken.actor.uuid);
-            if (part) {
-              await ChaseState.setParticipantFranja(part.id, targetFranja, { absolute: true });
-            }
-          }
-        });
       });
     }
 
-    // Botones de control de participantes (+1 / -1 Franja, Eliminar, Cambiar Rol)
+    // Botones de ajuste de Franja (+1 / -1)
     container.querySelectorAll(".btn-move-franja").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -191,23 +155,50 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // Lanzador de Tiradas de Movimiento
-    container.querySelectorAll(".btn-roll-movement").forEach(btn => {
-      btn.addEventListener("click", async ev => {
-        const actionKey = ev.currentTarget.dataset.action;
-        const participantId = ev.currentTarget.dataset.participantId;
-        await this._executeMovementRoll(participantId, actionKey);
-      });
+    // BOTÓN GIGANTE DE TIRADA DE MOVIMIENTO (PASO 1)
+    container.querySelector(".roll-movement-giant")?.addEventListener("click", async () => {
+      const selectedAction = container.querySelector('input[name="selected-mov-action"]:checked')?.value || "cambiar_posicion";
+      const activeParticipant = this._getActiveParticipant();
+      if (!activeParticipant) {
+        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar los dados.");
+        return;
+      }
+      await this._executeMovementRoll(activeParticipant.id, selectedAction);
     });
 
-    // Lanzador de Tiradas de Maniobra
-    container.querySelectorAll(".btn-roll-maneuver").forEach(btn => {
-      btn.addEventListener("click", async ev => {
-        const maneuverKey = ev.currentTarget.dataset.maneuver;
-        const participantId = ev.currentTarget.dataset.participantId;
-        await this._executeManeuverRoll(participantId, maneuverKey);
-      });
+    // BOTÓN GIGANTE DE TIRADA DE MANIOBRA (PASO 2)
+    container.querySelector(".roll-maneuver-giant")?.addEventListener("click", async () => {
+      const selectedManeuver = container.querySelector('input[name="selected-man-action"]:checked')?.value || "atacar_directo";
+      const activeParticipant = this._getActiveParticipant();
+      if (!activeParticipant) {
+        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar los dados.");
+        return;
+      }
+      await this._executeManeuverRoll(activeParticipant.id, selectedManeuver);
     });
+  }
+
+  /**
+   * Obtiene el participante activo para el usuario actual.
+   */
+  _getActiveParticipant() {
+    const state = ChaseState.get();
+    if (!state.participants.length) return null;
+
+    // Si hay un token controlado en el canvas
+    const selectedToken = canvas.tokens?.controlled[0];
+    if (selectedToken?.actor) {
+      const found = state.participants.find(p => p.actorUuid === selectedToken.actor.uuid);
+      if (found) return found;
+    }
+
+    // Buscar el primer participante del usuario
+    const userOwned = state.participants.find(p => {
+      const actor = game.actors?.find(a => a.uuid === p.actorUuid);
+      return actor ? actor.isOwner : false;
+    });
+
+    return userOwned || state.participants[0];
   }
 
   async _onDrop(event) {

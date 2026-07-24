@@ -25,7 +25,7 @@ export class ChaseState {
       visibilidad: "normal",   // normal(+0), mala(+2), pesima(+4)
       franjasMax: 10,
       turno: 1,
-      fase: "iniciativa",      // iniciativa, movimiento, maniobras, finalizado
+      fase: "movimiento",      // movimiento, maniobras, finalizado
       activeParticipantId: null,
       participants: []
     };
@@ -40,12 +40,12 @@ export class ChaseState {
   /**
    * Guarda y sincroniza el estado en todo el mundo.
    */
-  static async update(changes, { broadcast = true } = {}) {
+  static async update(changes, { broadcast = true, showToAll = false } = {}) {
     if (!game.user.isGM) {
-      // Si un jugador pide actualizar, lo envía mediante socket al GM
       game.socket.emit(`module.${this.MODULE_ID}`, {
         type: "UPDATE_CHASE_STATE",
-        changes
+        changes,
+        showToAll
       });
       return;
     }
@@ -56,7 +56,7 @@ export class ChaseState {
 
     if (broadcast) {
       game.socket.emit(`module.${this.MODULE_ID}`, {
-        type: "REFRESH_CHASE_HUD",
+        type: showToAll ? "OPEN_CHASE_HUD_ALL" : "REFRESH_CHASE_HUD",
         state: updated
       });
       Hooks.callAll("camcChaseStateChanged", updated);
@@ -66,19 +66,24 @@ export class ChaseState {
   }
 
   /**
+   * Muestra el panel de persecución a todos los jugadores conectados.
+   */
+  static async showToAllPlayers() {
+    await this.update({ active: true }, { broadcast: true, showToAll: true });
+  }
+
+  /**
    * Añade un personaje o vehículo a la persecución.
    */
   static async addParticipant({ actor, role = "evader", franja = 1, isDriver = true }) {
     if (!actor) return;
     const current = this.get();
 
-    // Evitar duplicados
     if (current.participants.some(p => p.actorUuid === actor.uuid)) {
       ui.notifications.info(`${actor.name} ya está en la persecución.`);
       return;
     }
 
-    // Buscar si tiene montura vinculada
     let mountData = null;
     if (actor.type === "personaje" && actor.system?.mount?.uuid) {
       const mountActor = await fromUuid(actor.system.mount.uuid);
@@ -113,19 +118,17 @@ export class ChaseState {
       name: actor.name,
       img: actor.img || "icons/svg/mystery-man.svg",
       type: actor.type,
-      role: role, // 'evader' (Perseguido) o 'pursuer' (Perseguidor)
+      role: role,
       franja: Math.clamp(Number(franja) || 1, 1, current.franjasMax),
       isDriver: Boolean(isDriver),
       mount: mountData,
       status: [],
       iniciativa: null,
-      obstaculizadoMod: 0 // Modificador temporal al ser obstaculizado
+      obstaculizadoMod: 0
     };
 
     current.participants.push(newParticipant);
-    if (!current.active) current.active = true;
-
-    await this.update({ active: true, participants: current.participants });
+    await this.update({ active: true, participants: current.participants }, { broadcast: true, showToAll: true });
     ui.notifications.success(`${actor.name} añadido a la persecución en la Franja ${newParticipant.franja}.`);
   }
 

@@ -1,16 +1,14 @@
 <div class="camc-chase-container">
   
-  {{!-- HEADER: DASHBOARD DE ENTORNO Y DIFICULTAD --}}
+  {{!-- HEADER: TITULO Y BOTÓN MOSTRAR A TODOS --}}
   <header class="camc-chase-header">
     <div class="camc-chase-title-box">
-      <h2><i class="fas fa-flag-checkered"></i> Persecución en las Llanuras Yermas</h2>
-      <span class="camc-chase-subtitle">Control Visual Táctico · Turno {{state.turno}}</span>
+      <h2><i class="fas fa-flag-checkered"></i> Control Visual de Persecución</h2>
+      <span class="camc-chase-subtitle"><i class="fas fa-info-circle"></i> Guía rápida: 1. Selecciona tu acción ➔ 2. Haz clic en el Botón Gigante de Dado 🎲</span>
     </div>
 
     {{!-- DASHBOARD DE TERRENO Y VISIBILIDAD --}}
     <div class="camc-chase-dashboard">
-      
-      {{!-- TERRENO --}}
       <div class="camc-dashboard-tile">
         <label><i class="fas fa-mountain"></i> Terreno</label>
         {{#if isGM}}
@@ -24,7 +22,6 @@
         {{/if}}
       </div>
 
-      {{!-- VISIBILIDAD --}}
       <div class="camc-dashboard-tile">
         <label><i class="fas fa-smog"></i> Visibilidad</label>
         {{#if isGM}}
@@ -42,32 +39,114 @@
       <div class="camc-dashboard-tile highlight-diff">
         <label><i class="fas fa-crosshairs"></i> Dificultad Base</label>
         <div class="camc-diff-badge">
-          <span>{{baseDifficulty}}</span>
+          <span>D{{baseDifficulty}}</span>
         </div>
       </div>
 
-      {{!-- TURNO Y CONTROLES GM --}}
+      {{!-- MOSTRAR A TODOS Y CONTROLES GM --}}
       <div class="camc-dashboard-tile controls">
-        <label><i class="fas fa-stopwatch"></i> Control Turno</label>
+        <label><i class="fas fa-users"></i> Multijugador</label>
         <div class="camc-btn-group">
           {{#if isGM}}
-            <button type="button" class="btn-next-turn" title="Avanzar al siguiente turno"><i class="fas fa-step-forward"></i> Siguiente Turno</button>
+            <button type="button" class="btn-show-all" title="Abrir esta pantalla a todos los jugadores"><i class="fas fa-bullhorn"></i> Mostrar a Todos</button>
+            <button type="button" class="btn-next-turn" title="Siguiente Turno"><i class="fas fa-step-forward"></i> Turno {{state.turno}}</button>
             <button type="button" class="btn-reset-chase danger" title="Reiniciar persecución"><i class="fas fa-undo"></i></button>
           {{else}}
             <span class="camc-tile-value">Turno {{state.turno}}</span>
           {{/if}}
         </div>
       </div>
-
     </div>
   </header>
+
+  {{!-- CONSOLA HEROICA DE TIRADAS DE DADOS (ZONA SUPERIOR CLARA Y VISIBLE) --}}
+  <section class="camc-dice-console">
+    <div class="console-header">
+      <h3><i class="fas fa-dice-d20"></i> CONSOLA DE TIRADA DE DADOS</h3>
+      <span class="console-hint">Selecciona tu personaje y presiona los botones gigantes de dados para realizar la tirada</span>
+    </div>
+
+    <div class="console-body">
+      {{!-- PASO 1: TIRADA DE MOVIMIENTO --}}
+      <div class="console-step-box movement-box">
+        <div class="step-title">
+          <span class="step-number">PASO 1</span>
+          <h4><i class="fas fa-tachometer-alt"></i> TIRAR MOVIMIENTO (AVANZAR EN LA PISTA)</h4>
+        </div>
+
+        <div class="action-selector">
+          <label class="action-radio">
+            <input type="radio" name="selected-mov-action" value="cambiar_posicion" checked />
+            <span class="radio-pill">🟢 Normal (+0 Dif) · Avanza 1 Franja</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-mov-action" value="quemar_rueda" />
+            <span class="radio-pill danger">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-mov-action" value="obstaculizar" />
+            <span class="radio-pill warning">🛡️ Obstaculizar (+2 Dif) · Penaliza a Riva</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-mov-action" value="mantener_posicion" />
+            <span class="radio-pill">⏸️ Mantener Posición (Sin tirada)</span>
+          </label>
+        </div>
+
+        {{!-- BOTÓN GIGANTE DE TIRADA DE DADOS DE MOVIMIENTO --}}
+        <button type="button" class="btn-giant-roll roll-movement-giant">
+          <i class="fas fa-dice"></i>
+          <div class="btn-text">
+            <strong>¡TIRAR DADOS DE CONDUCCIÓN / MOVIMIENTO!</strong>
+            <small>Dificultad objetivo actual: D<span class="current-diff-display">{{baseDifficulty}}</span></small>
+          </div>
+        </button>
+      </div>
+
+      {{!-- PASO 2: TIRADA DE MANIOBRA / ATAQUE --}}
+      <div class="console-step-box maneuver-box">
+        <div class="step-title">
+          <span class="step-number">PASO 2</span>
+          <h4><i class="fas fa-crosshairs"></i> TIRAR MANIOBRA / ATAQUE TÁCTICO</h4>
+        </div>
+
+        <div class="action-selector">
+          <label class="action-radio">
+            <input type="radio" name="selected-man-action" value="atacar_directo" checked />
+            <span class="radio-pill">⚔️ Atacar Directo</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-man-action" value="atacar_estabilizando" />
+            <span class="radio-pill">⚖️ Estabilizar y Atacar</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-man-action" value="chocar" />
+            <span class="radio-pill danger">💥 Chocar Vehículos</span>
+          </label>
+          <label class="action-radio">
+            <input type="radio" name="selected-man-action" value="embestir" />
+            <span class="radio-pill danger">🚙 Embestir</span>
+          </label>
+        </div>
+
+        {{!-- BOTÓN GIGANTE DE TIRADA DE MANIOBRA --}}
+        <button type="button" class="btn-giant-roll roll-maneuver-giant danger">
+          <i class="fas fa-crosshairs"></i>
+          <div class="btn-text">
+            <strong>¡TIRAR MANIOBRA / ATAQUE!</strong>
+            <small>Genera la tarjeta de combate y daño en el chat</small>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
 
   {{!-- PISTA TÁCTICA DE FRANJAS (1 A 10) --}}
   <section class="camc-chase-track-section">
     <div class="camc-track-header">
-      <span><i class="fas fa-compress-arrows-alt"></i> FRANJA 1 (SALIDA / ORIGEN)</span>
-      <span class="camc-track-title">CARRETERA Y YERMOS</span>
-      <span class="escape-text"><i class="fas fa-skull-crossbones"></i> FRANJA {{state.franjasMax}} (ZONA DE HUIDA)</span>
+      <span><i class="fas fa-compress-arrows-alt"></i> FRANJA 1 (ORIGEN)</span>
+      <span class="camc-track-title"><i class="fas fa-road"></i> CARRETERA Y YERMOS (10 FRANJAS)</span>
+      <span class="escape-text"><i class="fas fa-flag-checkered"></i> FRANJA {{state.franjasMax}} (ZONA DE HUIDA)</span>
     </div>
 
     <div class="camc-chase-track">
@@ -75,10 +154,10 @@
         <div class="franja-cell {{#if this.isEscape}}escape-cell{{/if}} {{#if this.isStart}}start-cell{{/if}}" data-franja="{{this.numero}}">
           <div class="franja-number-badge">{{this.numero}}</div>
 
-          {{!-- PERSEGUIDORES EN ESTA FRANJA (PARTE SUPERIOR) --}}
+          {{!-- PERSEGUIDORES EN ESTA FRANJA (SUPERIOR) --}}
           <div class="franja-slot pursuers-slot">
             {{#each this.pursuers}}
-              <div class="participant-token pursuer-token" title="{{this.name}} (Perseguidor - Franja {{this.franja}})">
+              <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguidor - Franja {{this.franja}})">
                 <img src="{{this.img}}" alt="{{this.name}}" />
                 <span class="token-name">{{this.name}}</span>
               </div>
@@ -87,10 +166,10 @@
 
           <div class="franja-divider"></div>
 
-          {{!-- PERSEGUIDOS EN ESTA FRANJA (PARTE INFERIOR) --}}
+          {{!-- PERSEGUIDOS EN ESTA FRANJA (INFERIOR) --}}
           <div class="franja-slot evaders-slot">
             {{#each this.evaders}}
-              <div class="participant-token evader-token" title="{{this.name}} (Perseguido - Franja {{this.franja}})">
+              <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguido - Franja {{this.franja}})">
                 <img src="{{this.img}}" alt="{{this.name}}" />
                 <span class="token-name">{{this.name}}</span>
               </div>
@@ -101,27 +180,25 @@
     </div>
   </section>
 
-  {{!-- PANEL DE PARTICIPANTES Y ACCIONES --}}
+  {{!-- PANEL INFERIOR DE PARTICIPANTES --}}
   <main class="camc-chase-roster-grid">
     
-    {{!-- COLUMNA DE PERSEGUIDOS --}}
+    {{!-- PERSEGUIDOS --}}
     <div class="camc-roster-column evaders-column">
       <div class="roster-header evader">
-        <h3><i class="fas fa-shield-alt"></i> PERSEGUIDOS (OBJETIVO)</h3>
-        <span class="badge-count">{{perseguidos.length}}</span>
+        <h3><i class="fas fa-shield-alt"></i> PERSEGUIDOS / A LA FUGA ({{perseguidos.length}})</h3>
       </div>
 
       <div class="roster-list">
         {{#each perseguidos}}
-          <div class="participant-card evader-card {{#if this.isControlled}}controlled{{/if}}">
+          <div class="participant-card evader-card {{#if this.isControlled}}controlled{{/if}}" data-participant-id="{{this.id}}">
             <div class="participant-head">
               <img src="{{this.img}}" class="avatar" alt="{{this.name}}" />
               <div class="identity">
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.isDriver}}<span class="tag driver-tag"><i class="fas fa-motorcycle"></i> Conductor</span>{{/if}}
-                  {{#if this.mount}}<span class="tag mount-tag">{{this.mount.name}}</span>{{/if}}
+                  {{#if this.mount}}<span class="tag mount-tag"><i class="fas fa-motorcycle"></i> {{this.mount.name}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -134,59 +211,31 @@
                 {{/if}}
               </div>
             </div>
-
-            {{!-- ACCIONES RÁPIDAS DE MOVIMIENTO Y MANIOBRA --}}
-            {{#if this.isControlled}}
-              <div class="participant-actions">
-                <div class="action-group">
-                  <label><i class="fas fa-tachometer-alt"></i> Movimiento</label>
-                  <div class="btn-grid">
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="cambiar_posicion" title="Avanzar 1 franja (+2 en crítico)">Cambiar pos.</button>
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="mantener_posicion" title="Mantener franja actual sin tirada">Mantener</button>
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="obstaculizar" title="+1 franja y +3 dif a perseguidor">Obstaculizar (+2)</button>
-                    <button type="button" class="btn-roll-movement danger" data-participant-id="{{this.id}}" data-action="quemar_rueda" title="Avanzar 2 franjas (+3 en crítico)">Quemar rueda (+4)</button>
-                  </div>
-                </div>
-
-                <div class="action-group">
-                  <label><i class="fas fa-crosshairs"></i> Maniobras</label>
-                  <div class="btn-grid">
-                    <button type="button" class="btn-roll-maneuver" data-participant-id="{{this.id}}" data-maneuver="atacar_directo">Atacar directo</button>
-                    <button type="button" class="btn-roll-maneuver" data-participant-id="{{this.id}}" data-maneuver="atacar_estabilizando">Estabilizar y atacar</button>
-                    <button type="button" class="btn-roll-maneuver danger" data-participant-id="{{this.id}}" data-maneuver="chocar">Chocar</button>
-                    <button type="button" class="btn-roll-maneuver danger" data-participant-id="{{this.id}}" data-maneuver="embestir">Embestir</button>
-                  </div>
-                </div>
-              </div>
-            {{/if}}
-
           </div>
         {{else}}
           <div class="empty-roster">
-            <p><i class="fas fa-info-circle"></i> Arrastra un Personaje o Token a este panel para añadirlo como Perseguido.</p>
+            <p><i class="fas fa-info-circle"></i> Arrastra un Personaje o Token aquí para añadirlo como Perseguido.</p>
           </div>
         {{/each}}
       </div>
     </div>
 
-    {{!-- COLUMNA DE PERSEGUIDORES --}}
+    {{!-- PERSEGUIDORES --}}
     <div class="camc-roster-column pursuers-column">
       <div class="roster-header pursuer">
-        <h3><i class="fas fa-fire"></i> PERSEGUIDORES (AMENAZA)</h3>
-        <span class="badge-count">{{perseguidores.length}}</span>
+        <h3><i class="fas fa-fire"></i> PERSEGUIDORES / AMENAZA ({{perseguidores.length}})</h3>
       </div>
 
       <div class="roster-list">
         {{#each perseguidores}}
-          <div class="participant-card pursuer-card {{#if this.isControlled}}controlled{{/if}}">
+          <div class="participant-card pursuer-card {{#if this.isControlled}}controlled{{/if}}" data-participant-id="{{this.id}}">
             <div class="participant-head">
               <img src="{{this.img}}" class="avatar" alt="{{this.name}}" />
               <div class="identity">
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.isDriver}}<span class="tag driver-tag"><i class="fas fa-motorcycle"></i> Conductor</span>{{/if}}
-                  {{#if this.mount}}<span class="tag mount-tag">{{this.mount.name}}</span>{{/if}}
+                  {{#if this.mount}}<span class="tag mount-tag"><i class="fas fa-motorcycle"></i> {{this.mount.name}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -199,36 +248,10 @@
                 {{/if}}
               </div>
             </div>
-
-            {{!-- ACCIONES RÁPIDAS DE MOVIMIENTO Y MANIOBRA --}}
-            {{#if this.isControlled}}
-              <div class="participant-actions">
-                <div class="action-group">
-                  <label><i class="fas fa-tachometer-alt"></i> Movimiento</label>
-                  <div class="btn-grid">
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="cambiar_posicion" title="Avanzar 1 franja (+2 en crítico)">Cambiar pos.</button>
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="mantener_posicion" title="Mantener franja actual sin tirada">Mantener</button>
-                    <button type="button" class="btn-roll-movement" data-participant-id="{{this.id}}" data-action="obstaculizar" title="+1 franja y +3 dif a perseguidor">Obstaculizar (+2)</button>
-                    <button type="button" class="btn-roll-movement danger" data-participant-id="{{this.id}}" data-action="quemar_rueda" title="Avanzar 2 franjas (+3 en crítico)">Quemar rueda (+4)</button>
-                  </div>
-                </div>
-
-                <div class="action-group">
-                  <label><i class="fas fa-crosshairs"></i> Maniobras</label>
-                  <div class="btn-grid">
-                    <button type="button" class="btn-roll-maneuver" data-participant-id="{{this.id}}" data-maneuver="atacar_directo">Atacar directo</button>
-                    <button type="button" class="btn-roll-maneuver" data-participant-id="{{this.id}}" data-maneuver="atacar_estabilizando">Estabilizar y atacar</button>
-                    <button type="button" class="btn-roll-maneuver danger" data-participant-id="{{this.id}}" data-maneuver="chocar">Chocar</button>
-                    <button type="button" class="btn-roll-maneuver danger" data-participant-id="{{this.id}}" data-maneuver="embestir">Embestir</button>
-                  </div>
-                </div>
-              </div>
-            {{/if}}
-
           </div>
         {{else}}
           <div class="empty-roster">
-            <p><i class="fas fa-info-circle"></i> Arrastra un Personaje o Token manteniendo presionado [Shift] para añadirlo como Perseguidor.</p>
+            <p><i class="fas fa-info-circle"></i> Arrastra un Token con [Shift] para añadirlo como Perseguidor.</p>
           </div>
         {{/each}}
       </div>
