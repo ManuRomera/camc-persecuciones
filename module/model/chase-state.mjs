@@ -1,13 +1,27 @@
 /**
  * Modelo de Estado Global para Persecuciones en Cuervos de Asgard MC.
+ * Estilo Vikingo / Motero con Runas Nórdicas y Control por Fases.
  */
 export class ChaseState {
   static SETTING_KEY = "activeChaseState";
   static MODULE_ID = "camc-persecuciones";
 
+  // Runas Nórdicas asociadas a cada Franja (1 a 10)
+  static FRANJA_RUNES = [
+    { num: 1, rune: "ᚠ", name: "Fehu", label: "Origen" },
+    { num: 2, rune: "ᚢ", name: "Uruz", label: "Fuerza" },
+    { num: 3, rune: "ᚦ", name: "Thurisaz", label: "Desafío" },
+    { num: 4, rune: "ᚨ", name: "Ansuz", label: "Aliento" },
+    { num: 5, rune: "ᚱ", name: "Raidho", label: "La Carrera" },
+    { num: 6, rune: "ᚲ", name: "Kenaz", label: "Fuego" },
+    { num: 7, rune: "ᚷ", name: "Gebo", label: "Pacto" },
+    { num: 8, rune: "ᚹ", name: "Wunjo", label: "Victoria" },
+    { num: 9, rune: "ᚺ", name: "Hagalaz", label: "Tormenta" },
+    { num: 10, rune: "ᛖ", name: "Ehwaz", label: "Valhalla / Huida" }
+  ];
+
   /**
    * Obtiene el estado actual guardado.
-   * @returns {Object} Estado de la persecución
    */
   static get() {
     const raw = game.settings.get(this.MODULE_ID, this.SETTING_KEY);
@@ -20,12 +34,12 @@ export class ChaseState {
   static normalize(data) {
     const defaultState = {
       active: false,
-      title: "Persecución en las Llanuras Yermas",
+      title: "ᚱ PERSECUCIÓN EN LAS LLANURAS YERMAS ᛏ",
       terreno: "media",       // facil(8), media(10), desafiante(13), dificil(16), muy_dificil(20)
       visibilidad: "normal",   // normal(+0), mala(+2), pesima(+4)
       franjasMax: 10,
       turno: 1,
-      fase: "movimiento",      // movimiento, maniobras, finalizado
+      fase: "iniciativa",      // iniciativa, declaracion, movimiento, maniobra
       activeParticipantId: null,
       participants: []
     };
@@ -66,7 +80,7 @@ export class ChaseState {
   }
 
   /**
-   * Muestra el panel de persecución a todos los jugadores conectados.
+   * Muestra la barra HUD de persecución a todos los jugadores conectados.
    */
   static async showToAllPlayers() {
     await this.update({ active: true }, { broadcast: true, showToAll: true });
@@ -118,18 +132,19 @@ export class ChaseState {
       name: actor.name,
       img: actor.img || "icons/svg/mystery-man.svg",
       type: actor.type,
-      role: role,
+      role: role, // 'evader' (Perseguido) o 'pursuer' (Perseguidor)
       franja: Math.clamp(Number(franja) || 1, 1, current.franjasMax),
       isDriver: Boolean(isDriver),
       mount: mountData,
       status: [],
-      iniciativa: null,
+      iniciativa: 0,
+      declaracion: null, // Acción declarada de movimiento
       obstaculizadoMod: 0
     };
 
     current.participants.push(newParticipant);
     await this.update({ active: true, participants: current.participants }, { broadcast: true, showToAll: true });
-    ui.notifications.success(`${actor.name} añadido a la persecución en la Franja ${newParticipant.franja}.`);
+    ui.notifications.success(`ᚱ ${actor.name} se une a la persecución en la Franja ${newParticipant.franja}.`);
   }
 
   /**

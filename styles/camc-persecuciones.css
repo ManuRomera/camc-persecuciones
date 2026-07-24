@@ -1,14 +1,15 @@
-/* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCCIONES - CUERVOS DE ASGARD MOTOR CLUB */
+/* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCIONES - ESTILO VIKINGO-MOTERO (CUERVOS DE ASGARD MC) */
 
 .camc-chase-window {
-  min-width: 880px;
-  min-height: 620px;
+  min-width: 920px;
+  min-height: 640px;
 }
 
 .camc-chase-window .window-header {
-  background: linear-gradient(180deg, #14181a, #07090a);
-  border-bottom: 1px solid var(--camc-copper, #e57922);
+  background: linear-gradient(180deg, #191d1e, #0a0c0d);
+  border-bottom: 2px solid var(--camc-copper, #e57922);
   color: #ede8dd;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
 }
 
 .camc-chase-window .window-content {
@@ -17,33 +18,34 @@
   overflow: hidden;
 }
 
-.camc-chase-container {
+.camc-chase-container.runic-biker-theme {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: 
-    radial-gradient(circle at 12% 0%, rgba(2, 214, 231, 0.08), transparent 35%),
-    radial-gradient(circle at 88% 8%, rgba(229, 121, 34, 0.12), transparent 32%),
+    radial-gradient(circle at 10% 0%, rgba(2, 214, 231, 0.1), transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(229, 121, 34, 0.14), transparent 38%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.012) 0 2px, transparent 2px 10px),
     linear-gradient(145deg, #07090b, #121619 55%, #080a0c);
   color: var(--camc-text, #ece8df);
   padding: 12px;
-  gap: 12px;
+  gap: 10px;
   overflow-y: auto;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* HEADER Y DASHBOARD */
+/* HEADER Y DASHBOARD VIKINGO-MOTERO */
 .camc-chase-header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: rgba(18, 21, 22, 0.95);
-  border: 1px solid #3e312a;
+  background: linear-gradient(180deg, rgba(22, 26, 27, 0.96), rgba(10, 12, 13, 0.98));
+  border: 1px solid #4a3a31;
   border-radius: 6px;
   padding: 10px 14px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 .camc-chase-title-box h2 {
@@ -57,16 +59,18 @@
   padding: 0;
 }
 
-.camc-chase-title-box h2 i {
+.rune-icon, .rune-symbol {
   color: var(--camc-cyan, #02d6e7);
-  margin-right: 6px;
+  font-size: 24px;
+  margin: 0 4px;
+  text-shadow: 0 0 10px rgba(2, 214, 231, 0.6);
 }
 
 .camc-chase-subtitle {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   display: block;
   margin-top: 2px;
 }
@@ -74,17 +78,17 @@
 .camc-chase-dashboard {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .camc-dashboard-tile {
-  background: rgba(10, 13, 14, 0.85);
+  background: rgba(10, 13, 14, 0.9);
   border: 1px solid #343c3e;
   border-radius: 5px;
   padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 110px;
 }
 
@@ -93,7 +97,6 @@
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
   font-weight: 700;
-  letter-spacing: 0.06em;
 }
 
 .camc-dashboard-tile select {
@@ -107,14 +110,14 @@
 
 .camc-dashboard-tile.highlight-diff {
   border-color: var(--camc-cyan, #02d6e7);
-  background: rgba(2, 214, 231, 0.08);
+  background: rgba(2, 214, 231, 0.1);
 }
 
 .camc-diff-badge {
   font-family: CAMCHead, "Arial Narrow", sans-serif;
   font-size: 26px;
   color: var(--camc-cyan, #02d6e7);
-  text-shadow: 0 0 10px rgba(2, 214, 231, 0.5);
+  text-shadow: 0 0 10px rgba(2, 214, 231, 0.6);
   line-height: 1;
   text-align: center;
 }
@@ -134,13 +137,59 @@
   filter: brightness(1.2);
 }
 
-/* CONSOLA HEROICA DE DADOS (ZONA SUPERIOR CLARA Y VISIBLE) */
-.camc-dice-console {
-  background: linear-gradient(180deg, rgba(22, 26, 27, 0.98), rgba(12, 15, 16, 0.98));
+/* BANDA DE FASES DEL TURNO (PASO A PASO GUIADO) */
+.camc-phase-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0b0e0f;
+  border: 1px solid #363e40;
+  border-radius: 6px;
+  padding: 6px 12px;
+  box-shadow: inset 0 0 10px #000;
+}
+
+.phase-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: CAMCHead, sans-serif;
+  font-size: 12px;
+  color: #727c7f;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.phase-step.active {
+  color: #fff;
+  background: rgba(2, 214, 231, 0.18);
+  border: 1px solid var(--camc-cyan, #02d6e7);
+  box-shadow: 0 0 10px rgba(2, 214, 231, 0.3);
+}
+
+.phase-rune {
+  font-size: 16px;
+  color: var(--camc-copper, #e57922);
+}
+
+.phase-step.active .phase-rune {
+  color: var(--camc-cyan, #02d6e7);
+}
+
+.phase-arrow {
+  color: #444c4e;
+  font-size: 12px;
+}
+
+/* CONSOLA HEROICA DE DADOS RÚNICOS */
+.camc-dice-console.runic-console {
+  background: linear-gradient(180deg, rgba(24, 29, 30, 0.98), rgba(12, 15, 16, 0.98));
   border: 2px solid var(--camc-cyan, #02d6e7);
   border-radius: 8px;
   padding: 12px 16px;
-  box-shadow: 0 0 18px rgba(2, 214, 231, 0.25), inset 0 0 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 20px rgba(2, 214, 231, 0.28), inset 0 0 12px rgba(0, 0, 0, 0.6);
 }
 
 .console-header {
@@ -161,11 +210,6 @@
   border: none;
 }
 
-.console-header h3 i {
-  color: var(--camc-cyan, #02d6e7);
-  margin-right: 6px;
-}
-
 .console-hint {
   font-size: 11px;
   color: #a8b0b2;
@@ -178,7 +222,7 @@
 }
 
 .console-step-box {
-  background: rgba(8, 11, 12, 0.85);
+  background: rgba(8, 11, 12, 0.88);
   border: 1px solid #343c3e;
   border-radius: 6px;
   padding: 10px;
@@ -253,41 +297,39 @@
   background: rgba(229, 121, 34, 0.2);
 }
 
-/* BOTONES GIGANTES DE TIRADA DE DADOS */
-.btn-giant-roll {
+/* BOTONES GIGANTES DE TIRADA DE DADOS CON RUNAS */
+.btn-giant-roll.runic-btn {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 12px !important;
+  gap: 14px !important;
   background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
   color: #000 !important;
   border: 2px solid #fff !important;
   border-radius: 6px !important;
-  padding: 12px 16px !important;
+  padding: 10px 14px !important;
   cursor: pointer !important;
   box-shadow: 0 0 15px rgba(2, 214, 231, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: transform 0.15s ease, filter 0.15s ease;
   margin-top: 4px;
 }
 
-.btn-giant-roll:hover {
+.btn-giant-roll.runic-btn:hover {
   transform: scale(1.02);
   filter: brightness(1.15);
   box-shadow: 0 0 22px rgba(2, 214, 231, 0.7);
 }
 
-.btn-giant-roll.danger {
+.btn-giant-roll.runic-btn.danger {
   background: linear-gradient(180deg, #e57922, #a64d08) !important;
   color: #fff !important;
   box-shadow: 0 0 15px rgba(229, 121, 34, 0.5);
 }
 
-.btn-giant-roll.danger:hover {
-  box-shadow: 0 0 22px rgba(229, 121, 34, 0.7);
-}
-
-.btn-giant-roll i {
-  font-size: 28px;
+.big-rune {
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 1;
 }
 
 .btn-text {
@@ -308,7 +350,7 @@
   opacity: 0.9;
 }
 
-/* PISTA TÁCTICA DE FRANJAS */
+/* PISTA TÁCTICA DE FRANJAS RÚNICAS (1 A 10) */
 .camc-chase-track-section {
   background: linear-gradient(180deg, rgba(16, 20, 21, 0.95), rgba(8, 10, 11, 0.98));
   border: 1px solid #48392e;
@@ -337,7 +379,7 @@
   color: var(--camc-danger, #e04e2d);
 }
 
-.camc-chase-track {
+.camc-chase-track.runic-track {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
@@ -371,9 +413,17 @@
   top: 4px;
   right: 6px;
   font-family: CAMCHead, sans-serif;
-  font-size: 16px;
-  color: #4b5457;
+  font-size: 15px;
+  color: #5b6568;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cell-rune {
+  color: var(--camc-copper, #e57922);
+  font-size: 16px;
 }
 
 .start-cell {
@@ -382,10 +432,10 @@
 
 .escape-cell {
   border-right: 3px solid var(--camc-danger, #e04e2d);
-  background: linear-gradient(180deg, rgba(224, 78, 45, 0.1), #0d1011);
+  background: linear-gradient(180deg, rgba(224, 78, 45, 0.12), #0d1011);
 }
 
-.escape-cell .franja-number-badge {
+.escape-cell .cell-rune {
   color: var(--camc-danger, #e04e2d);
 }
 
@@ -397,9 +447,9 @@
   align-content: flex-start;
 }
 
-.franja-divider {
-  height: 1px;
-  background: repeating-linear-gradient(90deg, #3d4548 0 4px, transparent 4px 8px);
+.franja-divider.runic-divider {
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #48392e 0 6px, transparent 6px 12px);
   margin: 4px 0;
 }
 

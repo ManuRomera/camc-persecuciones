@@ -3,17 +3,17 @@ import { ChaseState } from "../model/chase-state.mjs";
 const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
- * HUD interactivo y ultra-visual para el Control de Persecuciones en Cuervos de Asgard MC.
+ * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "camc-chase-hud",
-      classes: ["camc", "camc-chase-window"],
-      title: "Control Visual de Persecuciones · Llanuras Yermas",
+      classes: ["camc", "camc-chase-window", "camc-runic-theme"],
+      title: "ᚱ Control Visual de Persecuciones · Cuervos de Asgard ᛏ",
       template: "modules/camc-persecuciones/templates/chase-hud.hbs",
-      width: 1040,
-      height: 760,
+      width: 1060,
+      height: 780,
       resizable: true,
       minimizable: true
     });
@@ -35,15 +35,18 @@ export class CAMCChaseHUD extends ApplicationV1 {
       selected: v.key === state.visibilidad
     }));
 
-    const franjas = [];
     const maxFranjas = state.franjasMax || 10;
+    const franjasRunicas = [];
 
     for (let f = 1; f <= maxFranjas; f++) {
+      const runeObj = ChaseState.FRANJA_RUNES.find(r => r.num === f) || { rune: "ᚱ", label: "" };
       const pursuers = state.participants.filter(p => p.role === "pursuer" && p.franja === f);
       const evaders = state.participants.filter(p => p.role === "evader" && p.franja === f);
 
-      franjas.push({
+      franjasRunicas.push({
         numero: f,
+        rune: runeObj.rune,
+        label: runeObj.label,
         isEscape: f === maxFranjas,
         isStart: f === 1,
         pursuers,
@@ -75,7 +78,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       baseDifficulty,
       terrenos,
       visibilidad,
-      franjas,
+      franjasRunicas,
       perseguidores,
       perseguidos
     };
@@ -86,17 +89,23 @@ export class CAMCChaseHUD extends ApplicationV1 {
     const container = html[0] || html;
     const isGM = game.user.isGM;
 
-    // Drag & Drop para soltar actores/tokens en el HUD
     container.addEventListener("dragover", ev => ev.preventDefault());
     container.addEventListener("drop", ev => this._onDrop(ev));
 
-    // Botón GM: Mostrar a todos los jugadores conectados
     container.querySelector(".btn-show-all")?.addEventListener("click", async () => {
       await ChaseState.showToAllPlayers();
       ui.notifications.info("📢 Pantalla de persecución enviada a todos los jugadores.");
     });
 
-    // Listeners del Game Master
+    // Cambio de fase
+    container.querySelectorAll(".phase-step").forEach(step => {
+      step.addEventListener("click", async ev => {
+        if (!isGM) return;
+        const newPhase = ev.currentTarget.dataset.fase;
+        await ChaseState.update({ fase: newPhase });
+      });
+    });
+
     if (isGM) {
       container.querySelectorAll(".change-terreno").forEach(select => {
         select.addEventListener("change", async ev => {
@@ -112,22 +121,21 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       container.querySelector(".btn-next-turn")?.addEventListener("click", async () => {
         const state = ChaseState.get();
-        await ChaseState.update({ turno: state.turno + 1 });
+        await ChaseState.update({ turno: state.turno + 1, fase: "movimiento" });
         ui.notifications.info(`Persecución: Inicio del Turno ${state.turno + 1}`);
       });
 
       container.querySelector(".btn-reset-chase")?.addEventListener("click", async () => {
         const confirm = await Dialog.confirm({
           title: "Reiniciar Persecución",
-          content: "<p>¿Estás seguro de reiniciar las franjas y turnos de la persecución?</p>"
+          content: "<p>¿Estás seguro de reiniciar la persecución?</p>"
         });
         if (confirm) {
-          await ChaseState.update({ turno: 1, fase: "movimiento" });
+          await ChaseState.update({ turno: 1, fase: "iniciativa" });
         }
       });
     }
 
-    // Botones de ajuste de Franja (+1 / -1)
     container.querySelectorAll(".btn-move-franja").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -160,7 +168,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       const selectedAction = container.querySelector('input[name="selected-mov-action"]:checked')?.value || "cambiar_posicion";
       const activeParticipant = this._getActiveParticipant();
       if (!activeParticipant) {
-        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar los dados.");
+        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar.");
         return;
       }
       await this._executeMovementRoll(activeParticipant.id, selectedAction);
@@ -171,28 +179,23 @@ export class CAMCChaseHUD extends ApplicationV1 {
       const selectedManeuver = container.querySelector('input[name="selected-man-action"]:checked')?.value || "atacar_directo";
       const activeParticipant = this._getActiveParticipant();
       if (!activeParticipant) {
-        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar los dados.");
+        ui.notifications.warn("Selecciona o arrastra un personaje a la persecución antes de tirar.");
         return;
       }
       await this._executeManeuverRoll(activeParticipant.id, selectedManeuver);
     });
   }
 
-  /**
-   * Obtiene el participante activo para el usuario actual.
-   */
   _getActiveParticipant() {
     const state = ChaseState.get();
     if (!state.participants.length) return null;
 
-    // Si hay un token controlado en el canvas
     const selectedToken = canvas.tokens?.controlled[0];
     if (selectedToken?.actor) {
       const found = state.participants.find(p => p.actorUuid === selectedToken.actor.uuid);
       if (found) return found;
     }
 
-    // Buscar el primer participante del usuario
     const userOwned = state.participants.find(p => {
       const actor = game.actors?.find(a => a.uuid === p.actorUuid);
       return actor ? actor.isOwner : false;
@@ -230,10 +233,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     if (!p) return;
 
     const actor = await fromUuid(p.actorUuid);
-    if (!actor) {
-      ui.notifications.error("No se encontró el actor asociado.");
-      return;
-    }
+    if (!actor) return;
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
     const movConfig = CONFIG.CAMC?.persecucion?.movimiento?.find(m => m.key === actionKey);
@@ -245,7 +245,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
         content: `
           <div class="camc-chat-card">
             <header>
-              <h3><i class="fas fa-tachometer-alt"></i> Movimiento de Persecución</h3>
+              <h3><i class="fas fa-tachometer-alt"></i> Movimiento Rúnico</h3>
               <strong>${actor.name}</strong>
             </header>
             <p><b>Mantener posición:</b> Conserva la Franja ${p.franja} sin realizar tirada.</p>
@@ -299,7 +299,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       else if (actionKey === "obstaculizar") delta = 1;
 
       await ChaseState.setParticipantFranja(participant.id, delta);
-      ui.notifications.info(`${participant.name} avanza ${delta} franja(s) en la persecución.`);
+      ui.notifications.info(`ᚱ ${participant.name} avanza ${delta} franja(s) en la persecución.`);
     }
   }
 
@@ -319,7 +319,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       content: `
         <div class="camc-chat-card">
           <header>
-            <h3><i class="fas fa-crosshairs"></i> Maniobra de Persecución</h3>
+            <h3><i class="fas fa-crosshairs"></i> Maniobra Rúnica de Persecución</h3>
             <strong>${actor.name}</strong>
           </header>
           <p><b>${label}:</b> ${maneuverConfig?.summary || "Maniobra táctica en persecución."}</p>
