@@ -1,8 +1,8 @@
 /* ESTILOS DEL MÓDULO CONTROL VISUAL DE PERSECUCIONES - ESTILO VIKINGO-MOTERO (CUERVOS DE ASGARD MC) */
 
 .camc-chase-window {
-  min-width: 960px;
-  min-height: 680px;
+  min-width: 980px;
+  min-height: 700px;
 }
 
 .camc-chase-window .window-header {
@@ -330,7 +330,7 @@
   border-color: var(--camc-copper, #e57922);
 }
 
-/* ROSTER INFERIOR DE TARJETAS CON TIRADAS INDEPENDIENTES */
+/* ROSTER INFERIOR */
 .camc-chase-roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -429,6 +429,11 @@
   color: var(--camc-cyan, #02d6e7);
 }
 
+.health-tag {
+  border-color: var(--camc-danger, #e04e2d);
+  color: #ff856b;
+}
+
 .franja-controls {
   display: flex;
   align-items: center;
@@ -454,6 +459,90 @@
   font-size: 16px;
   min-width: 18px;
   text-align: center;
+}
+
+/* DETALLES DE MOTO VINCULADA */
+.moto-badge-box {
+  margin-top: 6px;
+  background: rgba(10, 13, 14, 0.85);
+  border: 1px solid var(--camc-copper, #e57922);
+  border-radius: 5px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moto-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.moto-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.moto-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.moto-title strong {
+  color: #fff;
+}
+
+.maniobra-badge {
+  background: rgba(2, 214, 231, 0.2);
+  border: 1px solid var(--camc-cyan, #02d6e7);
+  color: var(--camc-cyan, #02d6e7);
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.moto-structure-bar {
+  position: relative;
+  height: 12px;
+  background: #111516;
+  border: 1px solid #3d4648;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e57922, #02d6e7);
+  transition: width 0.3s ease;
+}
+
+.bar-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 9px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 0 3px #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dano-grave-alert {
+  font-size: 9px;
+  font-weight: bold;
+  color: #ff5252;
+  text-transform: uppercase;
 }
 
 /* PANEL INDIVIDUAL DE DADOS EN CADA TARJETA */

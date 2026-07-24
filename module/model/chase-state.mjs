@@ -1,12 +1,11 @@
 /**
  * Modelo de Estado Global para Persecuciones en Cuervos de Asgard MC.
- * Estilo Vikingo / Motero con Runas Nórdicas y Control por Fases.
+ * Integración con Motos Vinculadas, Maniobrabilidad y Daño Grave.
  */
 export class ChaseState {
   static SETTING_KEY = "activeChaseState";
   static MODULE_ID = "camc-persecuciones";
 
-  // Runas Nórdicas asociadas a cada Franja (1 a 10)
   static FRANJA_RUNES = [
     { num: 1, rune: "ᚠ", name: "Fehu", label: "Origen" },
     { num: 2, rune: "ᚢ", name: "Uruz", label: "Fuerza" },
@@ -20,17 +19,11 @@ export class ChaseState {
     { num: 10, rune: "ᛖ", name: "Ehwaz", label: "Valhalla / Huida" }
   ];
 
-  /**
-   * Obtiene el estado actual guardado.
-   */
   static get() {
     const raw = game.settings.get(this.MODULE_ID, this.SETTING_KEY);
     return this.normalize(raw);
   }
 
-  /**
-   * Normaliza y asegura la estructura de datos.
-   */
   static normalize(data) {
     const defaultState = {
       active: false,
@@ -39,7 +32,7 @@ export class ChaseState {
       visibilidad: "normal",   // normal(+0), mala(+2), pesima(+4)
       franjasMax: 10,
       turno: 1,
-      fase: "iniciativa",      // iniciativa, declaracion, movimiento, maniobra
+      fase: "iniciativa",
       activeParticipantId: null,
       participants: []
     };
@@ -51,9 +44,6 @@ export class ChaseState {
     return merged;
   }
 
-  /**
-   * Guarda y sincroniza el estado en todo el mundo.
-   */
   static async update(changes, { broadcast = true, showToAll = false } = {}) {
     if (!game.user.isGM) {
       game.socket.emit(`module.${this.MODULE_ID}`, {
@@ -79,66 +69,50 @@ export class ChaseState {
     return updated;
   }
 
-  /**
-   * Muestra la barra HUD de persecución a todos los jugadores conectados.
-   */
   static async showToAllPlayers() {
     await this.update({ active: true }, { broadcast: true, showToAll: true });
   }
 
-  /**
-   * Añade un personaje o vehículo a la persecución.
-   */
   static async addParticipant({ actor, role = "evader", franja = 1, isDriver = true }) {
     if (!actor) return;
     const current = this.get();
 
-    if (current.participants.some(p => p.actorUuid === actor.uuid)) {
+    if (current.participants.some(p => p.actorUuid === actor.uuid || p.actorUuid === actor.id)) {
       ui.notifications.info(`${actor.name} ya está en la persecución.`);
       return;
     }
 
-    let mountData = null;
-    if (actor.type === "personaje" && actor.system?.mount?.uuid) {
-      const mountActor = await fromUuid(actor.system.mount.uuid);
-      if (mountActor) {
-        mountData = {
-          uuid: mountActor.uuid,
-          name: mountActor.name,
-          img: mountActor.img,
-          estructura: {
-            value: Number(mountActor.system?.estructura?.value ?? 10),
-            max: Number(mountActor.system?.estructura?.max ?? 10)
-          },
-          maniobrabilidad: Number(mountActor.system?.maniobrabilidad ?? 0)
-        };
+    let mountUuid = null;
+    let mountName = null;
+    let mountImg = null;
+
+    if (actor.type === "personaje" || actor.type === "pnj") {
+      const uuid = actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
+      if (uuid) {
+        mountUuid = uuid;
+        mountName = actor.system.mount?.name || actor.system.vehiculo?.nombre || "Moto Vinculada";
+        mountImg = actor.system.mount?.img || "icons/svg/item-bag.svg";
       }
     } else if (actor.type === "moto") {
-      mountData = {
-        uuid: actor.uuid,
-        name: actor.name,
-        img: actor.img,
-        estructura: {
-          value: Number(actor.system?.estructura?.value ?? 10),
-          max: Number(actor.system?.estructura?.max ?? 10)
-        },
-        maniobrabilidad: Number(actor.system?.maniobrabilidad ?? 0)
-      };
+      mountUuid = actor.uuid;
+      mountName = actor.name;
+      mountImg = actor.img;
     }
 
     const newParticipant = {
       id: foundry.utils.randomID(),
-      actorUuid: actor.uuid,
+      actorUuid: actor.uuid || actor.id,
       name: actor.name,
       img: actor.img || "icons/svg/mystery-man.svg",
       type: actor.type,
-      role: role, // 'evader' (Perseguido) o 'pursuer' (Perseguidor)
+      role: role,
       franja: Math.clamp(Number(franja) || 1, 1, current.franjasMax),
       isDriver: Boolean(isDriver),
-      mount: mountData,
+      mountUuid: mountUuid,
+      mountName: mountName,
+      mountImg: mountImg,
       status: [],
       iniciativa: 0,
-      declaracion: null, // Acción declarada de movimiento
       obstaculizadoMod: 0
     };
 
@@ -147,18 +121,12 @@ export class ChaseState {
     ui.notifications.success(`ᚱ ${actor.name} se une a la persecución en la Franja ${newParticipant.franja}.`);
   }
 
-  /**
-   * Elimina un participante.
-   */
   static async removeParticipant(participantId) {
     const current = this.get();
     const filtered = current.participants.filter(p => p.id !== participantId);
     await this.update({ participants: filtered });
   }
 
-  /**
-   * Cambia la franja de un participante.
-   */
   static async setParticipantFranja(participantId, deltaOrValue, { absolute = false } = {}) {
     const current = this.get();
     const p = current.participants.find(x => x.id === participantId);
@@ -173,9 +141,6 @@ export class ChaseState {
     await this.update({ participants: current.participants });
   }
 
-  /**
-   * Calcula la Dificultad Base actual del Terreno + Visibilidad.
-   */
   static getBaseDifficulty(state = null) {
     const s = state || this.get();
     const config = CONFIG.CAMC?.persecucion;

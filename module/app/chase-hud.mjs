@@ -4,7 +4,7 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Incluye automatización completa de Maniobras, Daños de Estructura y Ataques Tácticos.
+ * Lee y muestra la Moto Vinculada, Maniobrabilidad, Estructura y Penalizadores de Daño Grave.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   static get defaultOptions() {
@@ -14,7 +14,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       title: "ᚱ Control Visual de Persecuciones · Cuervos de Asgard ᛏ",
       template: "modules/camc-persecuciones/templates/chase-hud.hbs",
       width: 1080,
-      height: 820,
+      height: 840,
       resizable: true,
       minimizable: true
     });
@@ -55,11 +55,57 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     }
 
+    // Enriquecer cada participante con su Moto Vinculada, Maniobrabilidad y Estructura
     const enrichedParticipants = await Promise.all(state.participants.map(async p => {
       const actor = await this._getActor(p.actorUuid);
+      let mountActor = null;
+      let mountInfo = null;
+
+      // Buscar Moto vinculada por UUID en system.mount o system.vehiculo
+      const mountUuid = p.mountUuid || actor?.system?.mount?.uuid || actor?.system?.vehiculo?.uuid;
+      if (mountUuid) {
+        mountActor = await this._getActor(mountUuid);
+      } else if (actor?.type === "moto") {
+        mountActor = actor;
+      }
+
+      if (mountActor) {
+        const estVal = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
+        const estMax = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
+        const maniobrabilidad = Number(mountActor.system?.reglas?.maniobrabilidad ?? mountActor.system?.maniobrabilidad ?? 2);
+        const danoGrave = mountActor.system?.reglas?.dano_grave || (estVal > 0 && estVal <= Math.floor(estMax / 2));
+        const inutilizada = estVal <= 0;
+
+        mountInfo = {
+          actor: mountActor,
+          uuid: mountActor.uuid,
+          name: mountActor.name,
+          img: mountActor.img || "icons/svg/item-bag.svg",
+          maniobrabilidad: maniobrabilidad,
+          estructuraVal: estVal,
+          estructuraMax: estMax,
+          estructuraPct: Math.clamp(Math.round((estVal / Math.max(1, estMax)) * 100), 0, 100),
+          danoGrave: danoGrave,
+          inutilizada: inutilizada
+        };
+      }
+
+      let healthInfo = null;
+      if (actor && (actor.type === "personaje" || actor.type === "pnj")) {
+        const hVal = Number(actor.system?.combate?.salud?.value ?? actor.system?.salud?.value ?? 10);
+        const hMax = Number(actor.system?.combate?.salud?.max ?? actor.system?.salud?.max ?? 10);
+        healthInfo = {
+          value: hVal,
+          max: hMax,
+          pct: Math.clamp(Math.round((hVal / Math.max(1, hMax)) * 100), 0, 100)
+        };
+      }
+
       return {
         ...p,
         actor,
+        mountInfo,
+        healthInfo,
         isControlled: actor ? actor.isOwner : isGM
       };
     }));
@@ -169,7 +215,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // BOTONES DIRECTOS DE MOVIMIENTO
+    // BOTONES DIRECTOS DE MOVIMIENTO CON APLICACIÓN DE MANIOBRABILIDAD
     container.querySelectorAll(".btn-roll-mov-direct").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -213,7 +259,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- LOGICA DE MOVIMIENTO ---
+  // --- MOVIMIENTO CON BONIFICADOR DE MANIOBRABILIDAD Y PENALIZADOR DE DAÑO GRAVE ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -223,6 +269,15 @@ export class CAMCChaseHUD extends ApplicationV1 {
     if (!actor) {
       ui.notifications.error(`No se encontró el actor para ${p.name}`);
       return;
+    }
+
+    // Buscar la moto vinculada
+    const mountUuid = p.mountUuid || actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
+    let mountActor = null;
+    if (mountUuid) {
+      mountActor = await this._getActor(mountUuid);
+    } else if (actor.type === "moto") {
+      mountActor = actor;
     }
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
@@ -245,7 +300,22 @@ export class CAMCChaseHUD extends ApplicationV1 {
       return;
     }
 
-    const finalDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
+    // Cálculo de Bonificación de Maniobrabilidad y Penalización por Daño Grave de la Moto
+    let maniobrabilidad = 0;
+    let danoGravePenalty = 0;
+
+    if (mountActor) {
+      maniobrabilidad = Number(mountActor.system?.reglas?.maniobrabilidad ?? mountActor.system?.maniobrabilidad ?? 2);
+      const estVal = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
+      const estMax = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
+      if (estVal <= Math.floor(estMax / 2)) {
+        danoGravePenalty = 3; // -3 de penalizador si la estructura <= 50%
+      }
+    }
+
+    // Dificultad Final = Base + Mod Acción + Penalizador Obstaculizado + Penalizador Daño Grave - Maniobrabilidad Moto
+    const totalModifier = actionMod + (p.obstaculizadoMod || 0) + danoGravePenalty - maniobrabilidad;
+    const finalDifficulty = baseDiff + totalModifier;
 
     let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
     if (!YsystemDiceCls) {
@@ -253,11 +323,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
         const mod = await import("/systems/cuervos-de-asgard-mc/module/dice/ysystem-dice.mjs");
         YsystemDiceCls = mod.YsystemDice;
       } catch (e) {}
-    }
-
-    let mountActor = null;
-    if (p.mount?.uuid) {
-      mountActor = await this._getActor(p.mount.uuid);
     }
 
     let result = null;
@@ -271,7 +336,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       const skillName = actor.system?.habilidades?.conducir ? "conducir" : "atletismo";
       result = await YsystemDiceCls.rollSkill(actor, skillName, {
         dificultad: finalDifficulty,
-        labelName: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey}`
+        labelName: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${movConfig?.label || actionKey} [Maniobrabilidad +${maniobrabilidad}${danoGravePenalty ? " | Daño Grave -3" : ""}]`
       });
     }
 
@@ -347,22 +412,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
       await this._resolveCrash(attacker, attackerActor, targetParticipant, targetActor, state);
     } else if (maneuverKey === "embestir") {
       await this._resolveRam(attacker, attackerActor, targetParticipant, targetActor, state);
-    } else {
-      ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: attackerActor }),
-        content: `
-          <div class="camc-chat-card">
-            <header><h3><i class="fas fa-crosshairs"></i> Maniobra en Franja ${attacker.franja}</h3><strong>${attackerActor.name} ➔ ${targetActor?.name || "Objetivo"}</strong></header>
-            <p>Ejecutando maniobra táctica ${maneuverKey}.</p>
-          </div>
-        `
-      });
     }
   }
 
-  /**
-   * Diálogo para seleccionar objetivo de maniobra.
-   */
   async _promptTargetSelection(targets, maneuverKey) {
     const optionsHtml = targets.map(t => `<option value="${t.id}">${t.name} (Franja ${t.franja})</option>`).join("");
     return new Promise(resolve => {
@@ -392,9 +444,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     });
   }
 
-  /**
-   * Automatización de Ataque Directo.
-   */
   async _resolveDirectAttack(attacker, attackerActor, targetParticipant, targetActor, state) {
     let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
     if (!YsystemDiceCls) {
@@ -405,7 +454,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
 
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
-    const driverMod = attacker.isDriver ? 5 : 2; // +5 si es piloto, +2 si es pasajero
+    const driverMod = attacker.isDriver ? 5 : 2;
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? targetActor?.system?.evasion ?? 10);
     const finalDifficulty = targetEvasion + driverMod + visibMod;
 
@@ -417,30 +466,12 @@ export class CAMCChaseHUD extends ApplicationV1 {
     });
 
     if (attackResult && (attackResult.exito || attackResult.isSuccess)) {
-      // Automatizar o proponer daño
       const damageRoll = await new Roll("2d6").evaluate({ async: true });
       const damage = damageRoll.total;
-
       await this._applyDamageToTarget(targetParticipant, targetActor, damage);
-
-      ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: attackerActor }),
-        content: `
-          <div class="camc-chat-card">
-            <header><h3><i class="fas fa-skull-crossbones"></i> ¡IMPACTO DIRECTO!</h3><strong>${attackerActor.name} ➔ ${targetActor?.name}</strong></header>
-            <p>El ataque supera la Evasión (${finalDifficulty}). Se infligen <b>${damage} puntos de daño</b> a ${targetActor?.name}.</p>
-          </div>
-        `,
-        rolls: [damageRoll]
-      });
-    } else {
-      ui.notifications.info(`${attackerActor.name} falló el ataque directo contra ${targetActor?.name} (Dificultad Evasión ${finalDifficulty}).`);
     }
   }
 
-  /**
-   * Automatización de Ataque Estabilizando (Pre-maniobra de conducción sin penalizador).
-   */
   async _resolveStabilizedAttack(attacker, attackerActor, targetParticipant, targetActor, state) {
     let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
     if (!YsystemDiceCls) {
@@ -451,18 +482,15 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
 
     const baseDiff = ChaseState.getBaseDifficulty(state);
-    ui.notifications.info("Ejecutando pre-maniobra de estabilización de vehículo...");
-
     const stabResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
       dificultad: baseDiff,
       labelName: "Pre-maniobra: Estabilizar Vehículo"
     });
 
     if (stabResult && (stabResult.exito || stabResult.isSuccess)) {
-      ui.notifications.success("¡Vehículo estabilizado! Ejecutando ataque sin penalización de piloto...");
       const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
       const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-      const finalDifficulty = targetEvasion + visibMod; // Sin +5 de piloto
+      const finalDifficulty = targetEvasion + visibMod;
 
       const attackResult = await YsystemDiceCls.rollSkill(attackerActor, "armas_fuego", {
         dificultad: finalDifficulty,
@@ -471,17 +499,11 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       if (attackResult && (attackResult.exito || attackResult.isSuccess)) {
         const damageRoll = await new Roll("2d6").evaluate({ async: true });
-        const damage = damageRoll.total;
-        await this._applyDamageToTarget(targetParticipant, targetActor, damage);
+        await this._applyDamageToTarget(targetParticipant, targetActor, damageRoll.total);
       }
-    } else {
-      ui.notifications.warn("La estabilización falló y no se pudo realizar el ataque.");
     }
   }
 
-  /**
-   * Automatización de Chocar Directamente (Daño dual a ambos vehículos).
-   */
   async _resolveCrash(attacker, attackerActor, targetParticipant, targetActor, state) {
     let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
     if (!YsystemDiceCls) {
@@ -493,7 +515,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-    const finalDifficulty = targetEvasion + 4 + visibMod; // Evasión + 4
+    const finalDifficulty = targetEvasion + 4 + visibMod;
 
     const crashResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
       dificultad: finalDifficulty,
@@ -506,25 +528,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       await this._applyDamageToTarget(targetParticipant, targetActor, dmgRoll1.total);
       await this._applyDamageToTarget(attacker, attackerActor, dmgRoll2.total);
-
-      ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: attackerActor }),
-        content: `
-          <div class="camc-chat-card">
-            <header><h3><i class="fas fa-car-crash"></i> ¡COLISIÓN FRONTAL DE VEHÍCULOS!</h3></header>
-            <p><b>${attackerActor.name}</b> choca contra <b>${targetActor?.name}</b> en la Franja ${attacker.franja}.</p>
-            <p>➔ Daño causado a ${targetActor?.name}: <b>${dmgRoll1.total} puntos de Estructura</b>.</p>
-            <p>➔ Daño sufrido por ${attackerActor.name}: <b>${dmgRoll2.total} puntos de Estructura</b>.</p>
-          </div>
-        `,
-        rolls: [dmgRoll1, dmgRoll2]
-      });
     }
   }
 
-  /**
-   * Automatización de Embestir.
-   */
   async _resolveRam(attacker, attackerActor, targetParticipant, targetActor, state) {
     let YsystemDiceCls = game.camc?.dice || game.cuervosDeAsgard?.dice;
     if (!YsystemDiceCls) {
@@ -534,14 +540,12 @@ export class CAMCChaseHUD extends ApplicationV1 {
       } catch (e) {}
     }
 
-    // Sacrificar 1D de Estructura propia
     const selfDmgRoll = await new Roll("1d6").evaluate({ async: true });
     await this._applyDamageToTarget(attacker, attackerActor, selfDmgRoll.total);
-    ui.notifications.info(`${attackerActor.name} sacrifica ${selfDmgRoll.total} puntos de Estructura propia para embestir.`);
 
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
     const targetEvasion = Number(targetActor?.system?.combate?.evasion ?? 10);
-    const finalDifficulty = targetEvasion + 2 + visibMod; // Evasión + 2
+    const finalDifficulty = targetEvasion + 2 + visibMod;
 
     const ramResult = await YsystemDiceCls.rollSkill(attackerActor, "conducir", {
       dificultad: finalDifficulty,
@@ -550,45 +554,39 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     if (ramResult && (ramResult.exito || ramResult.isSuccess)) {
       const ramDmgRoll = await new Roll("2d6 - 1").evaluate({ async: true });
-      const finalDmg = Math.max(1, ramDmgRoll.total);
-
-      await this._applyDamageToTarget(targetParticipant, targetActor, finalDmg);
-
-      ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor: attackerActor }),
-        content: `
-          <div class="camc-chat-card">
-            <header><h3><i class="fas fa-truck-monster"></i> ¡EMBESTIDA CON ÉXITO!</h3></header>
-            <p><b>${attackerActor.name}</b> embiste a <b>${targetActor?.name}</b> en la Franja ${attacker.franja}.</p>
-            <p>Se infligen <b>${finalDmg} puntos de daño a la Estructura</b> de ${targetActor?.name}.</p>
-          </div>
-        `,
-        rolls: [ramDmgRoll]
-      });
+      await this._applyDamageToTarget(targetParticipant, targetActor, Math.max(1, ramDmgRoll.total));
     }
   }
 
-  /**
-   * Aplica daño directamente a la Estructura de la Moto o Salud del Personaje en Foundry VTT.
-   */
   async _applyDamageToTarget(participant, actor, damage) {
     if (!actor || damage <= 0) return;
 
     let mountActor = null;
-    if (participant.mount?.uuid) {
-      mountActor = await this._getActor(participant.mount.uuid);
+    const mountUuid = participant.mountUuid || actor.system?.mount?.uuid || actor.system?.vehiculo?.uuid;
+    if (mountUuid) {
+      mountActor = await this._getActor(mountUuid);
     }
 
     if (mountActor) {
-      const current = Number(mountActor.system?.reglas?.estructura?.value ?? 10);
+      const current = Number(mountActor.system?.reglas?.estructura?.value ?? mountActor.system?.estructura?.value ?? 15);
+      const max = Number(mountActor.system?.reglas?.estructura?.max ?? mountActor.system?.estructura?.max ?? 15);
       const newVal = Math.max(0, current - damage);
-      await mountActor.update({ "system.reglas.estructura.value": newVal });
-      ui.notifications.warn(`Estructura de ${mountActor.name} reducida a ${newVal}/${mountActor.system?.reglas?.estructura?.max ?? 10}.`);
+      if (mountActor.system?.reglas?.estructura) {
+        await mountActor.update({ "system.reglas.estructura.value": newVal });
+      } else if (mountActor.system?.estructura) {
+        await mountActor.update({ "system.estructura.value": newVal });
+      }
+      ui.notifications.warn(`⚡ Estructura de ${mountActor.name} reducida a ${newVal}/${max}.`);
     } else if (actor.type === "moto") {
-      const current = Number(actor.system?.reglas?.estructura?.value ?? 10);
+      const current = Number(actor.system?.reglas?.estructura?.value ?? actor.system?.estructura?.value ?? 15);
+      const max = Number(actor.system?.reglas?.estructura?.max ?? actor.system?.estructura?.max ?? 15);
       const newVal = Math.max(0, current - damage);
-      await actor.update({ "system.reglas.estructura.value": newVal });
-      ui.notifications.warn(`Estructura de ${actor.name} reducida a ${newVal}/${actor.system?.reglas?.estructura?.max ?? 10}.`);
+      if (actor.system?.reglas?.estructura) {
+        await actor.update({ "system.reglas.estructura.value": newVal });
+      } else {
+        await actor.update({ "system.estructura.value": newVal });
+      }
+      ui.notifications.warn(`⚡ Estructura de ${actor.name} reducida a ${newVal}/${max}.`);
     } else {
       const current = Number(actor.system?.combate?.salud?.value ?? actor.system?.salud?.value ?? 10);
       const max = Number(actor.system?.combate?.salud?.max ?? actor.system?.salud?.max ?? 10);
@@ -599,10 +597,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
       } else if (actor.system?.salud) {
         await actor.update({ "system.salud.value": newVal });
       }
-      ui.notifications.warn(`Salud de ${actor.name} reducida a ${newVal}/${max}.`);
+      ui.notifications.warn(`⚡ Salud de ${actor.name} reducida a ${newVal}/${max}.`);
     }
 
-    // Refrescar HUD
     const state = ChaseState.get();
     await ChaseState.update({ participants: state.participants });
   }

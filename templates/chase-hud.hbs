@@ -91,7 +91,7 @@
         <div class="franja-cell {{#if this.isEscape}}escape-cell{{/if}} {{#if this.isStart}}start-cell{{/if}}" data-franja="{{this.numero}}">
           <div class="franja-number-badge"><span class="cell-rune">{{this.rune}}</span> {{this.numero}}</div>
 
-          {{!-- PERSEGUIDORES EN ESTA FRANJA (SUPERIOR) --}}
+          {{!-- PERSEGUIDORES EN ESTA FRANJA --}}
           <div class="franja-slot pursuers-slot">
             {{#each this.pursuers}}
               <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguidor - Franja {{this.franja}})">
@@ -103,7 +103,7 @@
 
           <div class="franja-divider runic-divider"></div>
 
-          {{!-- PERSEGUIDOS EN ESTA FRANJA (INFERIOR) --}}
+          {{!-- PERSEGUIDOS EN ESTA FRANJA --}}
           <div class="franja-slot evaders-slot">
             {{#each this.evaders}}
               <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguido - Franja {{this.franja}})">
@@ -117,7 +117,7 @@
     </div>
   </section>
 
-  {{!-- ROSTER COMPLETO DE CONTENDIENTES (PERSEGUIDOS Y PERSEGUIDORES CON SUS PROPIAS ACCIONES DE TIRADA DE DADOS) --}}
+  {{!-- ROSTER COMPLETO CON TARJETAS DE PERSONAJE Y DE MOTO VINCULADA --}}
   <main class="camc-chase-roster-grid">
     
     {{!-- COLUMNA DE PERSEGUIDOS --}}
@@ -135,7 +135,7 @@
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.mount}}<span class="tag mount-tag"><i class="fas fa-motorcycle"></i> {{this.mount.name}}</span>{{/if}}
+                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -149,18 +149,36 @@
               </div>
             </div>
 
-            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES PARA ESTE PERSEGUIDO --}}
+            {{!-- DETALLES DE LA MOTO VINCULADA (BONIFICACIÓN DE MANIOBRABILIDAD Y ESTRUCTURA) --}}
+            {{#if this.mountInfo}}
+              <div class="moto-badge-box">
+                <img src="{{this.mountInfo.img}}" class="moto-avatar" alt="{{this.mountInfo.name}}" />
+                <div class="moto-meta">
+                  <div class="moto-title">
+                    <strong><i class="fas fa-motorcycle"></i> {{this.mountInfo.name}}</strong>
+                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad a tiradas de Conducir">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
+                  </div>
+                  <div class="moto-structure-bar">
+                    <div class="bar-fill" style="width: {{this.mountInfo.estructuraPct}}%;"></div>
+                    <span class="bar-text">Estructura: {{this.mountInfo.estructuraVal}} / {{this.mountInfo.estructuraMax}}</span>
+                  </div>
+                  {{#if this.mountInfo.danoGrave}}
+                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3 a todas las tiradas)</span>
+                  {{/if}}
+                </div>
+              </div>
+            {{/if}}
+
+            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES --}}
             {{#if this.isControlled}}
               <div class="card-roll-panel">
-                
-                {{!-- MOVIMIENTO --}}
                 <div class="roll-subgroup">
                   <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
                   <div class="roll-row">
                     <select class="mov-action-select" data-id="{{this.id}}">
                       <option value="cambiar_posicion">🟢 Normal (Mod +0) · Avanza 1 Franja</option>
                       <option value="quemar_rueda">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</option>
-                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza al Rival</option>
+                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza Rival</option>
                       <option value="mantener_posicion">⏸️ Mantener Posición (Sin tirada)</option>
                     </select>
                     <button type="button" class="btn-card-roll btn-roll-mov-direct" data-id="{{this.id}}">
@@ -169,7 +187,6 @@
                   </div>
                 </div>
 
-                {{!-- MANIOBRA --}}
                 <div class="roll-subgroup">
                   <label><i class="fas fa-crosshairs"></i> Maniobra / Ataque Táctico</label>
                   <div class="roll-row">
@@ -184,7 +201,6 @@
                     </button>
                   </div>
                 </div>
-
               </div>
             {{/if}}
 
@@ -212,7 +228,7 @@
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.mount}}<span class="tag mount-tag"><i class="fas fa-motorcycle"></i> {{this.mount.name}}</span>{{/if}}
+                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -226,18 +242,36 @@
               </div>
             </div>
 
-            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES PARA ESTE PERSEGUIDOR --}}
+            {{!-- DETALLES DE LA MOTO VINCULADA --}}
+            {{#if this.mountInfo}}
+              <div class="moto-badge-box">
+                <img src="{{this.mountInfo.img}}" class="moto-avatar" alt="{{this.mountInfo.name}}" />
+                <div class="moto-meta">
+                  <div class="moto-title">
+                    <strong><i class="fas fa-motorcycle"></i> {{this.mountInfo.name}}</strong>
+                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad a tiradas de Conducir">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
+                  </div>
+                  <div class="moto-structure-bar">
+                    <div class="bar-fill" style="width: {{this.mountInfo.estructuraPct}}%;"></div>
+                    <span class="bar-text">Estructura: {{this.mountInfo.estructuraVal}} / {{this.mountInfo.estructuraMax}}</span>
+                  </div>
+                  {{#if this.mountInfo.danoGrave}}
+                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3 a todas las tiradas)</span>
+                  {{/if}}
+                </div>
+              </div>
+            {{/if}}
+
+            {{!-- PANEL INDIVIDUAL DE DADOS Y ACCIONES --}}
             {{#if this.isControlled}}
               <div class="card-roll-panel">
-                
-                {{!-- MOVIMIENTO --}}
                 <div class="roll-subgroup">
                   <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
                   <div class="roll-row">
                     <select class="mov-action-select" data-id="{{this.id}}">
                       <option value="cambiar_posicion">🟢 Normal (Mod +0) · Avanza 1 Franja</option>
                       <option value="quemar_rueda">🚀 Quemar Rueda (+4 Dif) · Avanza 2 Franjas</option>
-                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza al Rival</option>
+                      <option value="obstaculizar">🛡️ Obstaculizar (+2 Dif) · Penaliza Rival</option>
                       <option value="mantener_posicion">⏸️ Mantener Posición (Sin tirada)</option>
                     </select>
                     <button type="button" class="btn-card-roll btn-roll-mov-direct" data-id="{{this.id}}">
@@ -246,7 +280,6 @@
                   </div>
                 </div>
 
-                {{!-- MANIOBRA --}}
                 <div class="roll-subgroup">
                   <label><i class="fas fa-crosshairs"></i> Maniobra / Ataque Táctico</label>
                   <div class="roll-row">
@@ -261,7 +294,6 @@
                     </button>
                   </div>
                 </div>
-
               </div>
             {{/if}}
 
