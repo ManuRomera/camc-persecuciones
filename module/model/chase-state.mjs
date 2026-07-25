@@ -1,6 +1,6 @@
 /**
  * Modelo de Estado Global para Persecuciones en Cuervos de Asgard MC.
- * Vinculación bidireccional entre Piloto y Moto.
+ * Vinculación bidireccional entre Piloto y Moto, Iniciativa y Gestión de Fases.
  */
 export class ChaseState {
   static SETTING_KEY = "activeChaseState";
@@ -32,7 +32,7 @@ export class ChaseState {
       visibilidad: "normal",   // normal(+0), mala(+2), pesima(+4)
       franjasMax: 10,
       turno: 1,
-      fase: "iniciativa",
+      fase: "iniciativa",      // iniciativa, declaracion, movimiento, maniobra
       activeParticipantId: null,
       participants: []
     };
@@ -56,6 +56,12 @@ export class ChaseState {
 
     const current = this.get();
     const updated = foundry.utils.mergeObject(current, changes, { inplace: false });
+
+    // Ordenar participantes por iniciativa descendente si están en fase de movimiento/maniobra
+    if (updated.participants && updated.participants.length > 1) {
+      updated.participants.sort((a, b) => (Number(b.iniciativa) || 0) - (Number(a.iniciativa) || 0));
+    }
+
     await game.settings.set(this.MODULE_ID, this.SETTING_KEY, updated);
 
     if (broadcast) {
@@ -105,7 +111,7 @@ export class ChaseState {
       franja: Math.clamp(Number(franja) || 1, 1, current.franjasMax),
       isDriver: Boolean(isDriver),
       status: [],
-      iniciativa: 0,
+      iniciativa: Number(actor.system?.combate?.iniciativa ?? 0),
       obstaculizadoMod: 0
     };
 
@@ -138,8 +144,8 @@ export class ChaseState {
     const s = state || this.get();
     const config = CONFIG.CAMC?.persecucion;
 
-    const terrainItem = config?.terrenos?.find(t => t.key === s.terreno);
-    const visibItem = config?.visibilidad?.find(v => v.key === s.visibilidad);
+    const terrainItem = config?.terrenos?.find(t => t.key === s.terreno || String(t.dificultad) === String(s.terreno));
+    const visibItem = config?.visibilidad?.find(v => v.key === s.visibilidad || String(v.mod) === String(s.visibilidad));
 
     const terrainDiff = terrainItem ? terrainItem.dificultad : 10;
     const visibMod = visibItem ? visibItem.mod : 0;

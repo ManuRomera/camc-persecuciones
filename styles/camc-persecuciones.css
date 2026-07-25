@@ -28,30 +28,30 @@
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.012) 0 2px, transparent 2px 10px),
     linear-gradient(145deg, #07090b, #121619 55%, #080a0c);
   color: var(--camc-text, #ece8df);
-  padding: 12px;
-  gap: 10px;
+  padding: 8px 10px;
+  gap: 8px;
   overflow-y: auto;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* HEADER Y DASHBOARD VIKINGO-MOTERO */
-.camc-chase-header {
+/* HEADER Y DASHBOARD VIKINGO-MOTERO COMPACTO */
+.camc-chase-header.compact-header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   background: linear-gradient(180deg, rgba(22, 26, 27, 0.96), rgba(10, 12, 13, 0.98));
   border: 1px solid #4a3a31;
   border-radius: 6px;
-  padding: 10px 14px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 4px 15px rgba(0, 0, 0, 0.5);
+  padding: 6px 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .camc-chase-title-box h2 {
   margin: 0;
   font-family: CAMCHead, "Arial Narrow", sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #f5f2ec;
@@ -61,39 +61,39 @@
 
 .rune-icon, .rune-symbol {
   color: var(--camc-cyan, #02d6e7);
-  font-size: 24px;
-  margin: 0 4px;
-  text-shadow: 0 0 10px rgba(2, 214, 231, 0.6);
+  font-size: 20px;
+  margin: 0 3px;
+  text-shadow: 0 0 8px rgba(2, 214, 231, 0.6);
 }
 
 .camc-chase-subtitle {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
   letter-spacing: 0.08em;
   display: block;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .camc-chase-dashboard {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.camc-dashboard-tile {
+.camc-dashboard-tile.compact-tile {
   background: rgba(10, 13, 14, 0.9);
   border: 1px solid #343c3e;
-  border-radius: 5px;
-  padding: 6px 10px;
+  border-radius: 4px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 110px;
+  gap: 2px;
+  min-width: 95px;
 }
 
 .camc-dashboard-tile label {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
   font-weight: 700;
@@ -104,8 +104,8 @@
   border: 1px solid #424a4c !important;
   color: #fff !important;
   border-radius: 3px;
-  font-size: 12px;
-  padding: 3px 5px;
+  font-size: 11px;
+  padding: 2px 4px;
 }
 
 .camc-dashboard-tile.highlight-diff {
@@ -115,9 +115,9 @@
 
 .camc-diff-badge {
   font-family: CAMCHead, "Arial Narrow", sans-serif;
-  font-size: 26px;
+  font-size: 22px;
   color: var(--camc-cyan, #02d6e7);
-  text-shadow: 0 0 10px rgba(2, 214, 231, 0.6);
+  text-shadow: 0 0 8px rgba(2, 214, 231, 0.6);
   line-height: 1;
   text-align: center;
 }
@@ -126,30 +126,49 @@
   background: linear-gradient(180deg, #e57922, #a64d08) !important;
   color: #fff !important;
   font-weight: bold !important;
+  font-size: 10px !important;
   border: 1px solid #ffc082 !important;
-  padding: 5px 10px !important;
-  border-radius: 4px;
+  padding: 3px 6px !important;
+  border-radius: 3px;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
-}
-
-.btn-toggle-guide:hover {
-  filter: brightness(1.2);
 }
 
 .btn-show-all {
   background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
   color: #000 !important;
   font-weight: bold !important;
+  font-size: 10px !important;
   border: none !important;
-  padding: 5px 10px !important;
-  border-radius: 4px;
+  padding: 3px 6px !important;
+  border-radius: 3px;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(2, 214, 231, 0.4);
 }
 
-.btn-show-all:hover {
-  filter: brightness(1.2);
+/* BANDERÍN DE INSTRUCCIÓN ACTIVA DE FASE */
+.camc-instruction-banner {
+  background: linear-gradient(90deg, rgba(2, 214, 231, 0.15), rgba(229, 121, 34, 0.15));
+  border: 1px solid var(--camc-cyan, #02d6e7);
+  border-radius: 5px;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(2, 214, 231, 0.2);
+}
+
+.btn-highlight-action {
+  background: linear-gradient(180deg, #e57922, #b55000) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  font-size: 11px !important;
+  border: 1px solid #fff !important;
+  border-radius: 4px !important;
+  padding: 4px 10px !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 10px rgba(229, 121, 34, 0.6);
+  animation: pulse 2s infinite;
 }
 
 /* PANEL DE GUÍA RÁPIDA DE REGLAS DESPLEGABLE */
@@ -158,9 +177,8 @@
   background: linear-gradient(180deg, #181d1e, #0d1011);
   border: 2px solid var(--camc-copper, #e57922);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   box-shadow: 0 0 25px rgba(229, 121, 34, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.8);
-  animation: fadeIn 0.25s ease-out;
 }
 
 .camc-rules-guide-panel.open {
@@ -172,16 +190,15 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--camc-copper, #e57922);
-  padding-bottom: 6px;
-  margin-bottom: 10px;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .guide-header h3 {
   margin: 0;
   font-family: CAMCHead, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   color: var(--camc-copper, #e57922);
-  letter-spacing: 0.05em;
   border: none;
 }
 
@@ -189,25 +206,21 @@
   background: transparent !important;
   border: none !important;
   color: #a6a099 !important;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
-}
-
-.btn-close-guide:hover {
-  color: #fff !important;
 }
 
 .guide-body-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .guide-card {
   background: rgba(10, 13, 14, 0.9);
   border: 1px solid #363e40;
-  border-radius: 5px;
-  padding: 8px 10px;
+  border-radius: 4px;
+  padding: 6px 8px;
 }
 
 .guide-card.full-wide {
@@ -215,46 +228,38 @@
 }
 
 .guide-card h4 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-family: CAMCHead, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--camc-cyan, #02d6e7);
   border: none;
 }
 
 .guide-card ul {
   margin: 0;
-  padding-left: 16px;
-  font-size: 11px;
-  line-height: 1.4;
+  padding-left: 14px;
+  font-size: 10.5px;
+  line-height: 1.35;
   color: #d1cbbe;
 }
 
 .guide-card li {
-  margin-bottom: 3px;
-}
-
-.guide-card code {
-  background: #000;
-  color: var(--camc-cyan, #02d6e7);
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 10px;
+  margin-bottom: 2px;
 }
 
 .guide-highlights {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 3px;
 }
 
 .hl-badge {
-  font-size: 11px;
-  padding: 6px 10px;
+  font-size: 10px;
+  padding: 4px 8px;
   border-radius: 4px;
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
   border: 1px solid #363e40;
 }
 
@@ -277,27 +282,27 @@
 }
 
 /* BANDA DE FASES DEL TURNO */
-.camc-phase-bar {
+.camc-phase-bar.compact-phase-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #0b0e0f;
   border: 1px solid #363e40;
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 5px;
+  padding: 4px 10px;
   box-shadow: inset 0 0 10px #000;
 }
 
 .phase-step {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-family: CAMCHead, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   color: #727c7f;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 3px 6px;
+  border-radius: 3px;
   transition: all 0.2s ease;
 }
 
@@ -305,11 +310,11 @@
   color: #fff;
   background: rgba(2, 214, 231, 0.18);
   border: 1px solid var(--camc-cyan, #02d6e7);
-  box-shadow: 0 0 10px rgba(2, 214, 231, 0.3);
+  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
 }
 
 .phase-rune {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--camc-copper, #e57922);
 }
 
@@ -319,16 +324,16 @@
 
 .phase-arrow {
   color: #444c4e;
-  font-size: 12px;
+  font-size: 11px;
 }
 
-/* PISTA TÁCTICA DE FRANJAS RÚNICAS (1 A 10) */
-.camc-chase-track-section {
+/* PISTA TÁCTICA DE FRANJAS CON DUAL AVATAR (PJ + MOTO) */
+.camc-chase-track-section.compact-track-section {
   background: linear-gradient(180deg, rgba(16, 20, 21, 0.95), rgba(8, 10, 11, 0.98));
   border: 1px solid #48392e;
   border-radius: 6px;
-  padding: 10px 14px;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+  padding: 8px 10px;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
 }
 
 .camc-track-header {
@@ -336,15 +341,15 @@
   justify-content: space-between;
   align-items: center;
   font-family: CAMCHead, "Arial Narrow", sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.1em;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   color: #a89f95;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .camc-track-title {
   color: var(--camc-copper, #e57922);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .escape-text {
@@ -357,8 +362,8 @@
   gap: 4px;
   background: #080a0b;
   border: 1px solid #333a3c;
-  border-radius: 6px;
-  padding: 6px;
+  border-radius: 5px;
+  padding: 4px;
 }
 
 .franja-cell {
@@ -366,26 +371,26 @@
   background: linear-gradient(180deg, #15191b, #0d1011);
   border: 1px solid #2d3436;
   border-radius: 4px;
-  min-height: 110px;
+  min-height: 95px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 4px;
+  padding: 3px;
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .franja-cell:hover {
   border-color: var(--camc-cyan, #02d6e7);
-  box-shadow: 0 0 10px rgba(2, 214, 231, 0.2);
+  box-shadow: 0 0 8px rgba(2, 214, 231, 0.2);
 }
 
 .franja-number-badge {
   position: absolute;
-  top: 4px;
-  right: 6px;
+  top: 2px;
+  right: 4px;
   font-family: CAMCHead, sans-serif;
-  font-size: 15px;
+  font-size: 13px;
   color: #5b6568;
   pointer-events: none;
   display: flex;
@@ -395,7 +400,7 @@
 
 .cell-rune {
   color: var(--camc-copper, #e57922);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .start-cell {
@@ -407,47 +412,51 @@
   background: linear-gradient(180deg, rgba(224, 78, 45, 0.12), #0d1011);
 }
 
-.escape-cell .cell-rune {
-  color: var(--camc-danger, #e04e2d);
-}
-
 .franja-slot {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  min-height: 44px;
+  gap: 3px;
+  min-height: 38px;
   align-content: flex-start;
 }
 
 .franja-divider.runic-divider {
-  height: 2px;
-  background: repeating-linear-gradient(90deg, #48392e 0 6px, transparent 6px 12px);
-  margin: 4px 0;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, #48392e 0 4px, transparent 4px 8px);
+  margin: 2px 0;
 }
 
-/* AVATARES EN PISTA */
+/* AVATARES DUALES EN PISTA (PILOTO + MOTO) */
 .participant-token {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.85);
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.9);
   border: 1px solid #4a5457;
-  border-radius: 12px;
-  padding: 2px 6px 2px 2px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  padding: 1px 5px 1px 1px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-.participant-token img {
-  width: 22px;
-  height: 22px;
+.participant-token .pilot-avatar {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
 }
 
+.participant-token .moto-avatar-mini {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
+  border: 1px solid var(--camc-copper, #e57922);
+}
+
 .token-name {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  max-width: 60px;
+  max-width: 55px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -457,42 +466,34 @@
   border-color: var(--camc-cyan, #02d6e7);
 }
 
-.evader-token img {
-  border-color: var(--camc-cyan, #02d6e7);
-}
-
 .pursuer-token {
   border-color: var(--camc-copper, #e57922);
 }
 
-.pursuer-token img {
-  border-color: var(--camc-copper, #e57922);
-}
-
-/* ROSTER INFERIOR */
-.camc-chase-roster-grid {
+/* ROSTER INFERIOR COMPACTO */
+.camc-chase-roster-grid.compact-roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .camc-roster-column {
   background: rgba(14, 17, 18, 0.95);
   border: 1px solid #384042;
-  border-radius: 6px;
-  padding: 10px;
+  border-radius: 5px;
+  padding: 8px;
 }
 
 .roster-header {
-  padding-bottom: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px solid #333a3c;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .roster-header h3 {
   margin: 0;
   font-family: CAMCHead, sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   border: none;
 }
 
@@ -507,14 +508,14 @@
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .participant-card {
   background: linear-gradient(180deg, #181d1e, #0e1112);
   border: 1px solid #333c3e;
-  border-radius: 5px;
-  padding: 8px;
+  border-radius: 4px;
+  padding: 6px;
 }
 
 .evader-card {
@@ -527,21 +528,21 @@
 
 .participant-head {
   display: grid;
-  grid-template-columns: 36px 1fr auto;
-  gap: 8px;
+  grid-template-columns: 32px 1fr auto;
+  gap: 6px;
   align-items: center;
 }
 
 .participant-head .avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 4px;
   object-fit: cover;
 }
 
 .identity h4 {
-  margin: 0 0 2px;
-  font-size: 13px;
+  margin: 0 0 1px;
+  font-size: 12px;
   color: #fff;
   border: none;
 }
@@ -549,18 +550,23 @@
 .meta-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
 }
 
 .tag {
-  font-size: 9px;
+  font-size: 8.5px;
   text-transform: uppercase;
   font-weight: 800;
-  padding: 2px 5px;
+  padding: 1px 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid #384042;
   color: #ccc;
+}
+
+.init-tag {
+  border-color: var(--camc-copper, #e57922);
+  color: var(--camc-copper, #e57922);
 }
 
 .franja-tag {
@@ -576,12 +582,12 @@
 .franja-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .franja-controls button {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -589,32 +595,32 @@
   background: #1c2224 !important;
   border: 1px solid #434c4e !important;
   color: #fff !important;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
 }
 
 .franja-val {
   font-family: CAMCHead, sans-serif;
-  font-size: 16px;
-  min-width: 18px;
+  font-size: 15px;
+  min-width: 16px;
   text-align: center;
 }
 
-/* DETALLES DE MOTO VINCULADA */
-.moto-badge-box {
-  margin-top: 6px;
+/* DETALLES COMPACTOS DE MOTO VINCULADA */
+.moto-badge-box.compact-moto-box {
+  margin-top: 4px;
   background: rgba(10, 13, 14, 0.85);
   border: 1px solid var(--camc-copper, #e57922);
-  border-radius: 5px;
-  padding: 6px;
+  border-radius: 4px;
+  padding: 4px 6px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .moto-avatar {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 3px;
   object-fit: cover;
 }
@@ -623,14 +629,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .moto-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .moto-title strong {
@@ -641,18 +647,18 @@
   background: rgba(2, 214, 231, 0.2);
   border: 1px solid var(--camc-cyan, #02d6e7);
   color: var(--camc-cyan, #02d6e7);
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: bold;
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding: 1px 4px;
+  border-radius: 2px;
 }
 
 .moto-structure-bar {
   position: relative;
-  height: 12px;
+  height: 10px;
   background: #111516;
   border: 1px solid #3d4648;
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
 }
 
@@ -668,7 +674,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: bold;
   color: #fff;
   text-shadow: 0 0 3px #000;
@@ -678,30 +684,30 @@
 }
 
 .dano-grave-alert {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: bold;
   color: #ff5252;
   text-transform: uppercase;
 }
 
 /* PANEL INDIVIDUAL DE DADOS EN CADA TARJETA */
-.card-roll-panel {
-  margin-top: 8px;
-  padding-top: 8px;
+.card-roll-panel.compact-roll-panel {
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .roll-subgroup {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .roll-subgroup label {
-  font-size: 9px;
+  font-size: 8.5px;
   text-transform: uppercase;
   color: var(--camc-muted, #a6a099);
   font-weight: 800;
@@ -710,7 +716,7 @@
 .roll-row {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
 }
 
@@ -718,22 +724,22 @@
   background: #090c0d !important;
   border: 1px solid #3c4446 !important;
   color: #fff !important;
-  border-radius: 4px;
-  font-size: 11px;
-  padding: 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  padding: 3px;
 }
 
 .btn-card-roll {
   background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
   color: #000 !important;
   font-weight: 800 !important;
-  font-size: 10px !important;
+  font-size: 9.5px !important;
   border: 1px solid #fff !important;
-  border-radius: 4px !important;
-  padding: 6px !important;
+  border-radius: 3px !important;
+  padding: 5px !important;
   cursor: pointer !important;
   white-space: nowrap;
-  box-shadow: 0 0 8px rgba(2, 214, 231, 0.4);
+  box-shadow: 0 0 6px rgba(2, 214, 231, 0.4);
 }
 
 .btn-card-roll:hover {
@@ -744,14 +750,14 @@
   background: linear-gradient(180deg, #e57922, #a64d08) !important;
   color: #fff !important;
   border-color: #ffc082 !important;
-  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
+  box-shadow: 0 0 6px rgba(229, 121, 34, 0.4);
 }
 
 .empty-roster {
-  padding: 14px;
+  padding: 10px;
   text-align: center;
   color: #7b8487;
   border: 1px dashed #343c3e;
-  border-radius: 5px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 11px;
 }

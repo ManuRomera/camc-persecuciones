@@ -1,7 +1,7 @@
-<div class="camc-chase-container runic-biker-theme">
+<div class="camc-chase-container runic-biker-theme compact-layout">
   
   {{!-- HEADER: TITULO Y CONTROLES GM --}}
-  <header class="camc-chase-header">
+  <header class="camc-chase-header compact-header">
     <div class="camc-chase-title-box">
       <h2><span class="rune-icon">ᚱ</span> CONTROL VISUAL DE PERSECUCIÓN <span class="rune-icon">ᛏ</span></h2>
       <span class="camc-chase-subtitle">CUERVOS DE ASGARD MOTOR CLUB · CARRETERA Y YERMOS</span>
@@ -9,7 +9,7 @@
 
     {{!-- DASHBOARD DE TERRENO Y VISIBILIDAD --}}
     <div class="camc-chase-dashboard">
-      <div class="camc-dashboard-tile">
+      <div class="camc-dashboard-tile compact-tile">
         <label><i class="fas fa-mountain"></i> Terreno ᚠ</label>
         {{#if isGM}}
           <select class="change-terreno">
@@ -22,7 +22,7 @@
         {{/if}}
       </div>
 
-      <div class="camc-dashboard-tile">
+      <div class="camc-dashboard-tile compact-tile">
         <label><i class="fas fa-smog"></i> Visibilidad ᚺ</label>
         {{#if isGM}}
           <select class="change-visibilidad">
@@ -35,22 +35,22 @@
         {{/if}}
       </div>
 
-      {{!-- DIFICULTAD BASE CALCULADA --}}
-      <div class="camc-dashboard-tile highlight-diff">
+      {{!-- DIFICULTAD BASE --}}
+      <div class="camc-dashboard-tile highlight-diff compact-tile">
         <label><i class="fas fa-crosshairs"></i> Dificultad Base</label>
         <div class="camc-diff-badge">
           <span>D{{baseDifficulty}}</span>
         </div>
       </div>
 
-      {{!-- GUÍA RÁPIDA Y CONTROLES --}}
-      <div class="camc-dashboard-tile controls">
-        <label><i class="fas fa-book"></i> Ayuda & DJ</label>
+      {{!-- GUÍA RÁPIDA Y CONTROLES DJ --}}
+      <div class="camc-dashboard-tile controls compact-tile">
+        <label><i class="fas fa-book"></i> Controles & DJ</label>
         <div class="camc-btn-group">
-          <button type="button" class="btn-toggle-guide" title="Abrir o cerrar la Guía Rápida de Reglas"><i class="fas fa-book-open"></i> 📜 Guía Rápida</button>
+          <button type="button" class="btn-toggle-guide" title="Abrir o cerrar la Guía Rápida de Reglas"><i class="fas fa-book-open"></i> Guía</button>
           {{#if isGM}}
-            <button type="button" class="btn-show-all" title="Desplegar esta pantalla a todos los jugadores conectados"><i class="fas fa-bullhorn"></i> Mostrar a Todos</button>
-            <button type="button" class="btn-next-turn" title="Avanzar turno de persecución"><i class="fas fa-step-forward"></i> Turno {{state.turno}}</button>
+            <button type="button" class="btn-show-all" title="Desplegar a todos"><i class="fas fa-bullhorn"></i> Mostrar</button>
+            <button type="button" class="btn-next-turn" title="Avanzar turno"><i class="fas fa-step-forward"></i> Turno {{state.turno}}</button>
             <button type="button" class="btn-reset-chase danger" title="Reiniciar persecución"><i class="fas fa-undo"></i></button>
           {{else}}
             <span class="camc-tile-value">Turno {{state.turno}}</span>
@@ -60,74 +60,66 @@
     </div>
   </header>
 
-  {{!-- PANEL DESPLEGABLE DE GUÍA RÁPIDA DE REGLAS PARA EL MASTER Y JUGADORES --}}
+  {{!-- PANEL DESPLEGABLE DE GUÍA RÁPIDA DE REGLAS --}}
   <section class="camc-rules-guide-panel {{#if showGuide}}open{{/if}}">
     <div class="guide-header">
-      <h3><i class="fas fa-scroll"></i> 📜 GUÍA RÁPIDA DE REGLAS DE PERSECUCIÓN (CUERVOS DE ASGARD MC)</h3>
+      <h3><i class="fas fa-scroll"></i> 📜 GUÍA RÁPIDA DE REGLAS DE PERSECUCIÓN</h3>
       <button type="button" class="btn-close-guide" title="Cerrar guía"><i class="fas fa-times"></i></button>
     </div>
 
     <div class="guide-body-grid">
-      
-      {{!-- SECUENCIA DE TURNO --}}
       <div class="guide-card">
         <h4><i class="fas fa-hourglass-half"></i> 1. Secuencia del Turno</h4>
         <ul>
-          <li><b>Paso 1 · Iniciativa:</b> Tirada de <code>1D + Iniciativa</code> del piloto. Los pasajeros actúan en el turno de su piloto.</li>
-          <li><b>Paso 2 · Declaración:</b> En <i>orden inverso a la iniciativa</i> (quien sacó menos declara primero).</li>
-          <li><b>Paso 3 · Movimiento:</b> En <i>orden de iniciativa</i>. Cada participante ejecuta 1 acción de movimiento.</li>
-          <li><b>Paso 4 · Maniobras:</b> En <i>orden de iniciativa</i>. Cada participante o pasajero realiza 1 maniobra o ataque.</li>
+          <li><b>Paso 1 · Iniciativa:</b> <code>1D + Iniciativa</code> del piloto. Pasajeros actúan en el turno de su piloto.</li>
+          <li><b>Paso 2 · Declaración:</b> En <i>orden inverso a la iniciativa</i> (el menor declara primero).</li>
+          <li><b>Paso 3 · Movimiento:</b> En <i>orden de iniciativa</i> (el mayor actúa primero).</li>
+          <li><b>Paso 4 · Maniobras:</b> En <i>orden de iniciativa</i>. Pilotos y Pasajeros ejecutan 1 maniobra.</li>
         </ul>
       </div>
 
-      {{!-- DIFICULTAD Y TERRENO --}}
       <div class="guide-card">
         <h4><i class="fas fa-mountain"></i> 2. Dificultad y Terreno</h4>
         <ul>
           <li><b>Terreno Base:</b> Fácil (DF 8) | Media (DF 10) | Desafiante (DF 13) | Difícil (DF 16) | Muy Difícil (DF 20).</li>
           <li><b>Visibilidad:</b> Normal (+0) | Mala (+2) | Pésima (+4).</li>
-          <li><b>Dificultad Final:</b> Terreno + Visibilidad + ModAcción - Maniobrabilidad Moto + Penalizaciones.</li>
+          <li><b>Fórmula:</b> Terreno + Visibilidad + ModAcción - Maniobrabilidad Moto + Penalizaciones.</li>
         </ul>
       </div>
 
-      {{!-- ACCIONES DE MOVIMIENTO --}}
       <div class="guide-card">
         <h4><i class="fas fa-tachometer-alt"></i> 3. Acciones de Movimiento</h4>
         <ul>
-          <li><b>🟢 Cambiar de posición (+0 Mod):</b> Éxito = +1 Franja (+2 si es Crítico). Fallo = Conserva posición.</li>
-          <li><b>⏸️ Mantener posición:</b> Sin tirada. Se queda en su franja actual.</li>
-          <li><b>🛡️ Obstaculizar (+2 Mod):</b> Si estás 1 franja por delante del perseguidor, éxito le impone +3 de dificultad (+6 si es Crítico).</li>
+          <li><b>🟢 Cambiar posición (+0 Mod):</b> Éxito = +1 Franja (+2 si es Crítico).</li>
+          <li><b>⏸️ Mantener posición:</b> Sin tirada; conserva franja.</li>
+          <li><b>🛡️ Obstaculizar (+2 Mod):</b> Impone +3 de dificultad al perseguidor (+6 con Crítico).</li>
           <li><b>🚀 Quemar rueda (+4 Mod):</b> Éxito = +2 Franjas (+3 si es Crítico).</li>
         </ul>
       </div>
 
-      {{!-- MANIOBRAS Y ATAQUES --}}
       <div class="guide-card">
         <h4><i class="fas fa-crosshairs"></i> 4. Maniobras y Ataques</h4>
         <ul>
-          <li><b>⚔️ Atacar Directo:</b> Evasión rival + 5 (si ataca el piloto) o + 2 (pasajero) + Visibilidad. Apuntar a ocupante exige sacrificar 1D.</li>
-          <li><b>⚖️ Atacar Estabilizando:</b> Pre-tirada de Conducir vs Terreno. Si supera, ataca sin la penalización de +5 al piloto.</li>
-          <li><b>💥 Chocar Directamente:</b> Misma franja. Conducir vs Evasión + 4. Daño dual descontado a ambas motos.</li>
-          <li><b>🚙 Embestir:</b> Misma franja. Sacrifica 1D Estructura propia -> Conducir vs Evasión + 2 -> Causa daño de moto - 1.</li>
-          <li><b>💨 Sacar de la carretera (+3 Mod):</b> Si supera la tirada, el rival pierde el control y cae 2 franjas.</li>
+          <li><b>⚔️ Atacar Directo:</b> Evasión rival + 5 (piloto) o + 2 (pasajero) + Visibilidad.</li>
+          <li><b>⚖️ Atacar Estabilizando:</b> Pre-tirada de Conducir vs Terreno para eliminar el +5 de piloto.</li>
+          <li><b>💥 Chocar Directamente:</b> Misma franja. Conducir vs Evasión + 4 (daño dual a ambas motos).</li>
+          <li><b>🚙 Embestir:</b> Misma franja. Sacrifica 1D Estructura propia -> Conducir vs Evasión + 2.</li>
         </ul>
       </div>
 
-      {{!-- HUIDA Y DAÑO GRAVE --}}
       <div class="guide-card full-wide">
-        <h4><i class="fas fa-flag-checkered"></i> 5. Condición de Huida, Interceptación y Daño Grave</h4>
+        <h4><i class="fas fa-flag-checkered"></i> 5. Condición de Huida y Daño Grave</h4>
         <div class="guide-highlights">
-          <span class="hl-badge green"><b>🏁 Huida:</b> Si un Perseguido alcanza la Franja 10 (Valhalla), escapa de la persecución.</span>
-          <span class="hl-badge orange"><b>💥 Interceptación:</b> Si un Perseguidor alcanza la misma franja que el Perseguido, entra en alcance de choque/embestida.</span>
-          <span class="hl-badge red"><b>⚠️ Daño Grave:</b> Si la Estructura de la moto cae al 50% o menos, sufre -3 a todas las tiradas.</span>
+          <span class="hl-badge green"><b>🏁 Huida:</b> Si un Perseguido alcanza la Franja 10 (Valhalla), escapa.</span>
+          <span class="hl-badge orange"><b>💥 Interceptación:</b> Si un Perseguidor alcanza la misma franja que el Perseguido, se produce la captura.</span>
+          <span class="hl-badge red"><b>⚠️ Daño Grave:</b> -3 a todas las tiradas si la Estructura de la moto cae a 50% o menos.</span>
         </div>
       </div>
-
     </div>
   </section>
 
-  {{!-- BANDA DE FASES DEL TURNO --}}
-  <div class="camc-phase-bar">
+  {{!-- BANDA INTERACTIVA DE FASES DEL TURNO --}}
+  <div class="camc-phase-bar compact-phase-bar">
     <div class="phase-step {{#if (eq state.fase 'iniciativa')}}active{{/if}}" data-fase="iniciativa">
       <span class="phase-rune">ᛏ</span> 1. INICIATIVA
     </div>
@@ -137,7 +129,7 @@
     </div>
     <div class="phase-arrow">➔</div>
     <div class="phase-step {{#if (eq state.fase 'movimiento')}}active{{/if}}" data-fase="movimiento">
-      <span class="phase-rune">⚡</span> 3. MOVIMIENTO (Todos tiran)
+      <span class="phase-rune">⚡</span> 3. MOVIMIENTO (Orden Iniciativa)
     </div>
     <div class="phase-arrow">➔</div>
     <div class="phase-step {{#if (eq state.fase 'maniobra')}}active{{/if}}" data-fase="maniobra">
@@ -145,11 +137,19 @@
     </div>
   </div>
 
-  {{!-- PISTA TÁCTICA DE FRANJAS RÚNICAS (1 A 10) --}}
-  <section class="camc-chase-track-section">
+  {{!-- BANDERÍN DE INSTRUCCIÓN ACTIVA DEL TURNO --}}
+  <div class="camc-instruction-banner">
+    <span>{{{phaseInstruction}}}</span>
+    {{#if (eq state.fase 'iniciativa')}}
+      <button type="button" class="btn-roll-initiatives btn-highlight-action"><i class="fas fa-dice"></i> 🎲 TIRAR INICIATIVAS DE PERSECUCIÓN</button>
+    {{/if}}
+  </div>
+
+  {{!-- PISTA TÁCTICA CON DUAL AVATAR (PERSONAJE + MOTO) --}}
+  <section class="camc-chase-track-section compact-track-section">
     <div class="camc-track-header">
       <span><i class="fas fa-compress-arrows-alt"></i> FRANJA 1 (ᚠ ORIGEN)</span>
-      <span class="camc-track-title"><i class="fas fa-road"></i> PISTA NÓRDICO-MOTERA · YERMOS DE ASGARD</span>
+      <span class="camc-track-title"><i class="fas fa-road"></i> PISTA NÓRDICO-MOTERA · CARRETERA DE ASGARD</span>
       <span class="escape-text"><i class="fas fa-flag-checkered"></i> FRANJA {{state.franjasMax}} (ᛖ VALHALLA / HUIDA)</span>
     </div>
 
@@ -161,9 +161,10 @@
           {{!-- PERSEGUIDORES --}}
           <div class="franja-slot pursuers-slot">
             {{#each this.pursuers}}
-              <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguidor - Franja {{this.franja}})">
-                <img src="{{this.img}}" alt="{{this.name}}" />
-                <span class="token-name">{{this.name}}</span>
+              <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.pilotName}} montado en {{this.motoName}} (Franja {{this.franja}})">
+                <img src="{{this.pilotImg}}" class="pilot-avatar" alt="{{this.pilotName}}" />
+                {{#if this.motoImg}}<img src="{{this.motoImg}}" class="moto-avatar-mini" alt="{{this.motoName}}" />{{/if}}
+                <span class="token-name">{{this.pilotName}}</span>
               </div>
             {{/each}}
           </div>
@@ -173,9 +174,10 @@
           {{!-- PERSEGUIDOS --}}
           <div class="franja-slot evaders-slot">
             {{#each this.evaders}}
-              <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.name}} (Perseguido - Franja {{this.franja}})">
-                <img src="{{this.img}}" alt="{{this.name}}" />
-                <span class="token-name">{{this.name}}</span>
+              <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.pilotName}} montado en {{this.motoName}} (Franja {{this.franja}})">
+                <img src="{{this.pilotImg}}" class="pilot-avatar" alt="{{this.pilotName}}" />
+                {{#if this.motoImg}}<img src="{{this.motoImg}}" class="moto-avatar-mini" alt="{{this.motoName}}" />{{/if}}
+                <span class="token-name">{{this.pilotName}}</span>
               </div>
             {{/each}}
           </div>
@@ -184,8 +186,8 @@
     </div>
   </section>
 
-  {{!-- ROSTER COMPLETO DE CONTENDIENTES --}}
-  <main class="camc-chase-roster-grid">
+  {{!-- ROSTER COMPLETO CON TARJETAS COMPACTAS (PERSONAJE + MOTO VINCULADA + CONTROLES) --}}
+  <main class="camc-chase-roster-grid compact-roster-grid">
     
     {{!-- COLUMNA DE PERSEGUIDOS --}}
     <div class="camc-roster-column evaders-column">
@@ -202,7 +204,8 @@
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
+                  {{#if this.iniciativa}}<span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>{{/if}}
+                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> Salud: {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -218,7 +221,7 @@
 
             {{!-- TARJETA DE MOTO VINCULADA --}}
             {{#if this.mountInfo}}
-              <div class="moto-badge-box">
+              <div class="moto-badge-box compact-moto-box">
                 <img src="{{this.mountInfo.img}}" class="moto-avatar" alt="{{this.mountInfo.name}}" />
                 <div class="moto-meta">
                   <div class="moto-title">
@@ -230,17 +233,17 @@
                     <span class="bar-text">Estructura: {{this.mountInfo.estructuraVal}} / {{this.mountInfo.estructuraMax}}</span>
                   </div>
                   {{#if this.mountInfo.danoGrave}}
-                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3 a todas las tiradas)</span>
+                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3)</span>
                   {{/if}}
                 </div>
               </div>
             {{/if}}
 
-            {{!-- CONTROLES INDIVIDUALES DE DADOS --}}
+            {{!-- CONTROLES INDIVIDUALES DE DADOS DE JUGADOR --}}
             {{#if this.isControlled}}
-              <div class="card-roll-panel">
+              <div class="card-roll-panel compact-roll-panel">
                 <div class="roll-subgroup">
-                  <label><i class="fas fa-tachometer-alt"></i> Acción de Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
+                  <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
                   <div class="roll-row">
                     <select class="mov-action-select" data-id="{{this.id}}">
                       {{#each ../movimientosOptions}}
@@ -293,7 +296,8 @@
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
+                  {{#if this.iniciativa}}<span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>{{/if}}
+                  {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> Salud: {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
               <div class="franja-controls">
@@ -309,7 +313,7 @@
 
             {{!-- TARJETA DE MOTO VINCULADA --}}
             {{#if this.mountInfo}}
-              <div class="moto-badge-box">
+              <div class="moto-badge-box compact-moto-box">
                 <img src="{{this.mountInfo.img}}" class="moto-avatar" alt="{{this.mountInfo.name}}" />
                 <div class="moto-meta">
                   <div class="moto-title">
@@ -321,7 +325,7 @@
                     <span class="bar-text">Estructura: {{this.mountInfo.estructuraVal}} / {{this.mountInfo.estructuraMax}}</span>
                   </div>
                   {{#if this.mountInfo.danoGrave}}
-                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3 a todas las tiradas)</span>
+                    <span class="dano-grave-alert"><i class="fas fa-exclamation-triangle"></i> ¡DAÑO GRAVE! (-3)</span>
                   {{/if}}
                 </div>
               </div>
@@ -329,9 +333,9 @@
 
             {{!-- CONTROLES INDIVIDUALES DE DADOS --}}
             {{#if this.isControlled}}
-              <div class="card-roll-panel">
+              <div class="card-roll-panel compact-roll-panel">
                 <div class="roll-subgroup">
-                  <label><i class="fas fa-tachometer-alt"></i> Acción de Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
+                  <label><i class="fas fa-tachometer-alt"></i> Movimiento (Dificultad Base: D{{../baseDifficulty}})</label>
                   <div class="roll-row">
                     <select class="mov-action-select" data-id="{{this.id}}">
                       {{#each ../movimientosOptions}}

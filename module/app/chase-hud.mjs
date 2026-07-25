@@ -4,7 +4,7 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Incluye Guía Rápida de Reglas desplegable para el Director de Juego y jugadores.
+ * Incluye Tirada Automática de Iniciativas, Guía de Fases Interactiva, Visualización Dual de Personaje+Moto y Daño Directo.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   constructor(options = {}) {
@@ -19,7 +19,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       title: "ᚱ Control Visual de Persecuciones · Cuervos de Asgard ᛏ",
       template: "modules/camc-persecuciones/templates/chase-hud.hbs",
       width: 1080,
-      height: 840,
+      height: 820,
       resizable: true,
       minimizable: true
     });
@@ -68,8 +68,11 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     for (let f = 1; f <= maxFranjas; f++) {
       const runeObj = ChaseState.FRANJA_RUNES.find(r => r.num === f) || { rune: "ᚱ", label: "" };
-      const pursuers = state.participants.filter(p => p.role === "pursuer" && p.franja === f);
-      const evaders = state.participants.filter(p => p.role === "evader" && p.franja === f);
+      const pursuersRaw = state.participants.filter(p => p.role === "pursuer" && p.franja === f);
+      const evadersRaw = state.participants.filter(p => p.role === "evader" && p.franja === f);
+
+      const pursuers = await Promise.all(pursuersRaw.map(p => this._enrichParticipantForTrack(p)));
+      const evaders = await Promise.all(evadersRaw.map(p => this._enrichParticipantForTrack(p)));
 
       franjasRunicas.push({
         numero: f,
@@ -116,6 +119,9 @@ export class CAMCChaseHUD extends ApplicationV1 {
         };
       }
 
+      // Un jugador controla la tarjeta si es dueño del personaje O si es el DJ
+      const isControlled = isGM || (pilotActor ? pilotActor.isOwner : false);
+
       return {
         ...p,
         pilotActor,
@@ -124,12 +130,15 @@ export class CAMCChaseHUD extends ApplicationV1 {
         img: pilotActor?.img || p.img,
         mountInfo,
         healthInfo,
-        isControlled: pilotActor ? pilotActor.isOwner : isGM
+        isControlled
       };
     }));
 
     const perseguidores = enrichedParticipants.filter(p => p.role === "pursuer");
     const perseguidos = enrichedParticipants.filter(p => p.role === "evader");
+
+    // Texto explicativo dinámico según la fase activa del turno
+    const phaseInstruction = this._getPhaseInstruction(state.fase);
 
     return {
       ...data,
@@ -137,6 +146,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       isGM,
       showGuide: this.showGuide,
       baseDifficulty,
+      phaseInstruction,
       terrenos,
       visibilidad,
       movimientosOptions,
@@ -145,6 +155,32 @@ export class CAMCChaseHUD extends ApplicationV1 {
       perseguidores,
       perseguidos
     };
+  }
+
+  async _enrichParticipantForTrack(p) {
+    const { pilotActor, motoActor } = await this._resolvePilotAndMoto(p);
+    return {
+      ...p,
+      pilotName: pilotActor?.name || p.name,
+      pilotImg: pilotActor?.img || p.img,
+      motoName: motoActor?.name || null,
+      motoImg: motoActor?.img || null
+    };
+  }
+
+  _getPhaseInstruction(fase) {
+    switch (fase) {
+      case "iniciativa":
+        return "👉 <b>FASE 1 - INICIATIVA:</b> Pulsa el botón '🎲 Tirar Iniciativas' para calcular el orden de la persecución (1D + Iniciativa).";
+      case "declaracion":
+        return "👉 <b>FASE 2 - DECLARACIÓN:</b> En orden INVERSO a la iniciativa (el menor declara primero), los pilotos declaran su movimiento.";
+      case "movimiento":
+        return "👉 <b>FASE 3 - MOVIMIENTO:</b> En orden de INICIATIVA (el mayor actúa primero), pulsa '🎲 TIRAR DADOS CONDUCCIÓN' en tu tarjeta.";
+      case "maniobra":
+        return "👉 <b>FASE 4 - MANIOBRAS:</b> En orden de INICIATIVA, selecciona objetivo y pulsa '⚔️ TIRAR MANIOBRA' para atacar o chocar.";
+      default:
+        return "👉 Gestiona el turno de persecución utilizando la barra de fases.";
+    }
   }
 
   async _resolvePilotAndMoto(participant) {
@@ -219,11 +255,17 @@ export class CAMCChaseHUD extends ApplicationV1 {
       this.render(false);
     });
 
+    // TIRAR INICIATIVAS DE TODOS
+    container.querySelector(".btn-roll-initiatives")?.addEventListener("click", async () => {
+      await this._rollAllInitiatives();
+    });
+
     container.querySelector(".btn-show-all")?.addEventListener("click", async () => {
       await ChaseState.showToAllPlayers();
       ui.notifications.info("📢 Pantalla de persecución enviada a todos los jugadores.");
     });
 
+    // CAMBIO INTERACTIVO DE FASES
     container.querySelectorAll(".phase-step").forEach(step => {
       step.addEventListener("click", async ev => {
         if (!isGM) return;
@@ -333,6 +375,47 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
+  // --- AUTOMATIZACIÓN DE TIRADA DE INICIATIVAS DE PERSECUCIÓN ---
+  async _rollAllInitiatives() {
+    const state = ChaseState.get();
+    if (!state.participants.length) {
+      ui.notifications.warn("Añade participantes antes de tirar iniciativa.");
+      return;
+    }
+
+    ui.notifications.info("🎲 Tirando iniciativa de persecución para todos los pilotos...");
+    const { YsystemDiceCls } = await this._getSystemRollers();
+
+    const results = [];
+    for (const p of state.participants) {
+      const { pilotActor } = await this._resolvePilotAndMoto(p);
+      let initTotal = 0;
+
+      if (pilotActor) {
+        const bonus = Number(pilotActor.system?.combate?.iniciativa ?? 0);
+        const roll = await new Roll(`1d6 + ${bonus}`).evaluate({ async: true });
+        initTotal = roll.total;
+        p.iniciativa = initTotal;
+        results.push(`<li><b>${pilotActor.name}:</b> ${roll.total} (1D + ${bonus})</li>`);
+      }
+    }
+
+    // Ordenar participantes por iniciativa descendente y pasar a Fase 2 (Declaración)
+    state.participants.sort((a, b) => (Number(b.iniciativa) || 0) - (Number(a.iniciativa) || 0));
+    await ChaseState.update({ participants: state.participants, fase: "declaracion" });
+
+    ChatMessage.create({
+      content: `
+        <div class="camc-chat-card">
+          <header><h3><i class="fas fa-flag-checkered"></i> Iniciativa de Persecución</h3></header>
+          <ol>${results.join("")}</ol>
+          <p><small>Paso a Fase 2: Declaración en orden INVERSO de iniciativa.</small></p>
+        </div>
+      `
+    });
+  }
+
+  // --- EJECUCIÓN RIGUROSA DE MOVIMIENTO ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -421,6 +504,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
+  // --- EJECUCIÓN RIGUROSA DE MANIOBRAS ---
   async _executeManeuverRoll(participantId, maneuverKey) {
     const state = ChaseState.get();
     const attacker = state.participants.find(x => x.id === participantId);
@@ -696,44 +780,38 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
+  // --- APLICACIÓN RIGUROSA DE DAÑO A MOTO Y SALUD DE PERSONAJE EN FOUNDRY VTT ---
   async _applyDamageToTarget(participant, actor, damage) {
     if (!actor || damage <= 0) return;
 
-    const { motoActor } = await this._resolvePilotAndMoto(participant);
+    const { pilotActor, motoActor } = await this._resolvePilotAndMoto(participant);
 
+    // 1. Si el objetivo tiene Moto, aplicar daño a la Estructura de la Moto en Foundry
     if (motoActor) {
-      const current = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
-      const max = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
-      const newVal = Math.max(0, current - damage);
+      const currentEst = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
+      const maxEst = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
+      const newEst = Math.max(0, currentEst - damage);
 
       if (motoActor.system?.reglas?.estructura) {
-        await motoActor.update({ "system.reglas.estructura.value": newVal });
+        await motoActor.update({ "system.reglas.estructura.value": newEst });
       } else if (motoActor.system?.estructura) {
-        await motoActor.update({ "system.estructura.value": newVal });
+        await motoActor.update({ "system.estructura.value": newEst });
       }
-      ui.notifications.warn(`⚡ Estructura de ${motoActor.name} reducida a ${newVal}/${max}.`);
-    } else if (actor.type === "moto") {
-      const current = Number(actor.system?.reglas?.estructura?.value ?? actor.system?.estructura?.value ?? 15);
-      const max = Number(actor.system?.reglas?.estructura?.max ?? actor.system?.estructura?.max ?? 15);
-      const newVal = Math.max(0, current - damage);
+      ui.notifications.warn(`⚡ Estructura de ${motoActor.name} reducida a ${newEst}/${maxEst}.`);
+    }
 
-      if (actor.system?.reglas?.estructura) {
-        await actor.update({ "system.reglas.estructura.value": newVal });
-      } else {
-        await actor.update({ "system.estructura.value": newVal });
-      }
-      ui.notifications.warn(`⚡ Estructura de ${actor.name} reducida a ${newVal}/${max}.`);
-    } else {
-      const current = Number(actor.system?.combate?.salud?.value ?? actor.system?.salud?.value ?? 10);
-      const max = Number(actor.system?.combate?.salud?.max ?? actor.system?.salud?.max ?? 10);
-      const newVal = Math.max(0, current - damage);
+    // 2. Aplicar también daño a la Salud del Personaje en su Hoja de Foundry
+    if (pilotActor) {
+      const currentHealth = Number(pilotActor.system?.combate?.salud?.value ?? pilotActor.system?.salud?.value ?? 10);
+      const maxHealth = Number(pilotActor.system?.combate?.salud?.max ?? pilotActor.system?.salud?.max ?? 10);
+      const newHealth = Math.max(0, currentHealth - Math.ceil(damage / 2)); // Ocupante sufre parte del daño
 
-      if (actor.system?.combate?.salud) {
-        await actor.update({ "system.combate.salud.value": newVal });
-      } else if (actor.system?.salud) {
-        await actor.update({ "system.salud.value": newVal });
+      if (pilotActor.system?.combate?.salud) {
+        await pilotActor.update({ "system.combate.salud.value": newHealth });
+      } else if (pilotActor.system?.salud) {
+        await pilotActor.update({ "system.salud.value": newHealth });
       }
-      ui.notifications.warn(`⚡ Salud de ${actor.name} reducida a ${newVal}/${max}.`);
+      ui.notifications.warn(`⚡ Salud de ${pilotActor.name} reducida a ${newHealth}/${maxHealth}.`);
     }
 
     const state = ChaseState.get();
