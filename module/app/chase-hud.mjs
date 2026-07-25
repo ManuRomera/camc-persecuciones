@@ -4,7 +4,7 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Con visualización de Iniciativas, Botón de Eliminación Completa, Moto Vinculada y Ventajas Aplicadas.
+ * Integración bidireccional total con Hojas de Personaje y Moto del sistema.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
   constructor(options = {}) {
@@ -85,7 +85,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     }
 
-    // Ordenar participantes por Iniciativa descendente para calcular ranking visual
+    // Ordenar por iniciativa descendente
     const sortedParticipants = [...state.participants].sort((a, b) => (Number(b.iniciativa) || 0) - (Number(a.iniciativa) || 0));
 
     const enrichedParticipants = await Promise.all(sortedParticipants.map(async (p, index) => {
@@ -93,16 +93,16 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
       let mountInfo = null;
       if (motoActor) {
-        const estVal = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? motoActor.system?.vehiculo?.estructura?.value ?? 15);
-        const estMax = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? motoActor.system?.vehiculo?.estructura?.max ?? 15);
-        const maniobrabilidad = Number(motoActor.system?.reglas?.maniobrabilidad ?? motoActor.system?.maniobrabilidad ?? motoActor.system?.vehiculo?.maniobrabilidad ?? 2);
-        const danoGrave = estVal > 0 && estVal <= Math.floor(estMax / 2);
+        const estVal = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
+        const estMax = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
+        const maniobrabilidad = Number(motoActor.system?.reglas?.maniobrabilidad ?? motoActor.system?.maniobrabilidad ?? 2);
+        const danoGrave = Boolean(motoActor.system?.reglas?.dano_grave || (estVal > 0 && estVal <= Math.floor(estMax / 2)));
 
         mountInfo = {
           actor: motoActor,
           uuid: motoActor.uuid,
-          name: motoActor.name || pilotActor?.system?.vehiculo?.nombre || "Moto Vinculada",
-          img: motoActor.img || pilotActor?.system?.mount?.img || "icons/svg/item-bag.svg",
+          name: motoActor.name,
+          img: motoActor.img || "icons/svg/item-bag.svg",
           maniobrabilidad: maniobrabilidad,
           estructuraVal: estVal,
           estructuraMax: estMax,
@@ -123,7 +123,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       }
 
       const isControlled = isGM || (pilotActor ? pilotActor.isOwner : false);
-
       const rankNum = index + 1;
       const rankText = rankNum === 1 ? "🥇 1º (Más Rápido)" : (rankNum === 2 ? "🥈 2º" : (rankNum === 3 ? "🥉 3º" : `${rankNum}º`));
 
@@ -166,56 +165,53 @@ export class CAMCChaseHUD extends ApplicationV1 {
       ...p,
       pilotName: pilotActor?.name || p.name,
       pilotImg: pilotActor?.img || p.img,
-      motoName: motoActor?.name || pilotActor?.system?.vehiculo?.nombre || null,
-      motoImg: motoActor?.img || pilotActor?.system?.mount?.img || null
+      motoName: motoActor?.name || null,
+      motoImg: motoActor?.img || null
     };
   }
 
   /**
-   * Resolución ultra-robusta de Piloto y Moto.
+   * Resolución de Piloto y Moto desde las hojas del sistema Cuervos de Asgard MC.
    */
   async _resolvePilotAndMoto(participant) {
     let mainActor = await this._getActor(participant.actorUuid);
-    let mountActor = participant.mountUuid ? await this._getActor(participant.mountUuid) : null;
     let pilotActor = null;
+    let motoActor = null;
 
     if (mainActor?.type === "moto") {
       motoActor = mainActor;
-      const pilotUuid = motoActor.system?.reglas?.piloto_uuid || game.actors?.find(a => a.system?.mount?.uuid === motoActor.uuid)?.uuid;
-      pilotActor = pilotUuid ? await this._getActor(pilotUuid) : game.user.character;
+      const ownerUuid = motoActor.system?.vinculo?.ownerUuid || motoActor.system?.reglas?.piloto_uuid;
+      if (ownerUuid) pilotActor = await this._getActor(ownerUuid);
+      if (!pilotActor) {
+        pilotActor = game.actors?.find(a => a.type === "personaje" && a.system?.mount?.uuid === motoActor.uuid);
+      }
+      if (!pilotActor) pilotActor = game.user?.character || null;
     } else {
       pilotActor = mainActor;
-      if (!mountActor) {
-        const mountUuid = pilotActor?.system?.mount?.uuid || pilotActor?.system?.vehiculo?.uuid;
-        if (mountUuid) {
-          mountActor = await this._getActor(mountUuid);
-        } else if (pilotActor?.system?.vehiculo?.nombre) {
-          // Moto integrada directamente en la hoja de personaje
-          const veh = pilotActor.system.vehiculo;
-          mountActor = {
-            name: veh.nombre || "Moto del Personaje",
-            img: pilotActor.system?.mount?.img || pilotActor.img || "icons/svg/item-bag.svg",
-            system: {
-              reglas: {
-                maniobrabilidad: Number(veh.maniobrabilidad ?? 2),
-                estructura: {
-                  value: Number(veh.estructura?.value ?? 15),
-                  max: Number(veh.estructura?.max ?? 15)
-                }
-              }
-            }
-          };
-        }
+      const mountUuid = participant.mountUuid || pilotActor?.system?.mount?.uuid;
+      if (mountUuid) {
+        motoActor = await this._getActor(mountUuid);
+      }
+      if (!motoActor && pilotActor) {
+        motoActor = game.actors?.find(a => 
+          a.type === "moto" && (
+            a.system?.vinculo?.ownerUuid === pilotActor.uuid ||
+            a.system?.vinculo?.ownerUuid === pilotActor.id ||
+            a.system?.reglas?.piloto_uuid === pilotActor.uuid ||
+            a.system?.reglas?.piloto_uuid === pilotActor.id ||
+            a.system?.vinculo?.ownerName === pilotActor.name
+          )
+        );
       }
     }
 
-    return { pilotActor, motoActor: mountActor };
+    return { pilotActor, motoActor };
   }
 
   async _getActor(uuidOrId) {
     if (!uuidOrId) return null;
     try {
-      if (uuidOrId.startsWith("Actor.") || uuidOrId.startsWith("Compendium.") || uuidOrId.startsWith("Scene.")) {
+      if (typeof uuidOrId === "string" && (uuidOrId.startsWith("Actor.") || uuidOrId.startsWith("Compendium.") || uuidOrId.startsWith("Scene."))) {
         const doc = await fromUuid(uuidOrId);
         return doc?.actor || doc;
       }
@@ -283,7 +279,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
         });
       });
 
-      // BOTÓN EXPLICITO PARA FINALIZAR Y ELIMINAR LA PERSECUCIÓN
       container.querySelector(".btn-delete-chase")?.addEventListener("click", async () => {
         const confirm = await Dialog.confirm({
           title: "Eliminar Persecución",
@@ -324,7 +319,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // BOTONES DIRECTOS DE MOVIMIENTO
     container.querySelectorAll(".btn-roll-mov-direct").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -334,7 +328,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       });
     });
 
-    // BOTONES DIRECTOS DE MANIOBRA
     container.querySelectorAll(".btn-roll-man-direct").forEach(btn => {
       btn.addEventListener("click", async ev => {
         const id = ev.currentTarget.dataset.id;
@@ -368,7 +361,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- TIRADA DE INICIATIVAS CON ORDENACIÓN VISUAL EN EL MÓDULO ---
   async _rollAllInitiatives() {
     const state = ChaseState.get();
     if (!state.participants.length) {
@@ -390,7 +382,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       }
     }
 
-    // Ordenar participantes por iniciativa descendente para reflejar el ranking visualmente
     state.participants.sort((a, b) => (Number(b.iniciativa) || 0) - (Number(a.iniciativa) || 0));
     await ChaseState.update({ participants: state.participants });
 
@@ -404,7 +395,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     });
   }
 
-  // --- MOVIMIENTO CON APLICACIÓN GARANTIZADA DE VENTAJAS DE MOTO ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -441,25 +431,10 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     const targetDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
 
-    // Asegurar estructura de moto para que CAMCMountRolls aplique siempre Maniobrabilidad
-    const normalizedMoto = motoActor ? {
-      name: motoActor.name,
-      uuid: motoActor.uuid || pilotActor.uuid,
-      system: {
-        reglas: {
-          maniobrabilidad: Number(motoActor.system?.reglas?.maniobrabilidad ?? motoActor.system?.maniobrabilidad ?? pilotActor.system?.vehiculo?.maniobrabilidad ?? 2),
-          estructura: {
-            value: Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? pilotActor.system?.vehiculo?.estructura?.value ?? 15),
-            max: Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? pilotActor.system?.vehiculo?.estructura?.max ?? 15)
-          }
-        }
-      }
-    } : null;
-
     let result = null;
 
-    if (normalizedMoto && MountRollsCls) {
-      result = await MountRollsCls.rollDrive(pilotActor, normalizedMoto, {
+    if (motoActor && MountRollsCls) {
+      result = await MountRollsCls.rollDrive(pilotActor, motoActor, {
         label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${actionLabel}`,
         difficulty: targetDifficulty
       });
@@ -783,16 +758,16 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- APLICACIÓN GARANTIZADA DE DAÑO A MOTO Y SALUD DE PERSONAJE ---
+  // --- APLICACIÓN EN LAS HOJAS OFICIALES DE FOUNDRY VTT ---
   async _applyDamageToTarget(participant, actor, damage) {
     if (!actor || damage <= 0) return;
 
     const { pilotActor, motoActor } = await this._resolvePilotAndMoto(participant);
 
-    // 1. Daño a la Moto (Estructura HP)
+    // 1. Daño en la Hoja de la Moto
     if (motoActor) {
-      const currentEst = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? motoActor.system?.vehiculo?.estructura?.value ?? 15);
-      const maxEst = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? motoActor.system?.vehiculo?.estructura?.max ?? 15);
+      const currentEst = Number(motoActor.system?.reglas?.estructura?.value ?? motoActor.system?.estructura?.value ?? 15);
+      const maxEst = Number(motoActor.system?.reglas?.estructura?.max ?? motoActor.system?.estructura?.max ?? 15);
       const newEst = Math.max(0, currentEst - damage);
 
       if (motoActor.system?.reglas?.estructura) {
@@ -803,10 +778,10 @@ export class CAMCChaseHUD extends ApplicationV1 {
       ui.notifications.warn(`⚡ Estructura de ${motoActor.name} reducida a ${newEst}/${maxEst}.`);
     }
 
-    // 2. Daño al Personaje (Salud HP)
+    // 2. Daño en la Hoja del Personaje
     if (pilotActor) {
       const currentHealth = Number(pilotActor.system?.combate?.salud?.value ?? pilotActor.system?.salud?.value ?? 10);
-      const maxHealth = Number(pilotActor.system?.combate?.salud?.max ?? pilotActor.system?.salud?.max ?? 10);
+      const maxHealth = Number(pilotActor.system?.combate?.salud?.max ?? pilotActor.system?.combate?.salud?.max ?? 10);
       const newHealth = Math.max(0, currentHealth - Math.ceil(damage / 2));
 
       if (pilotActor.system?.combate?.salud) {
