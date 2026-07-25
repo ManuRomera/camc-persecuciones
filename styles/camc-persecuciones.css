@@ -2,7 +2,7 @@
 
 .camc-chase-window {
   min-width: 980px;
-  min-height: 700px;
+  min-height: 720px;
 }
 
 .camc-chase-window .window-header {
@@ -122,6 +122,21 @@
   text-align: center;
 }
 
+.btn-toggle-guide {
+  background: linear-gradient(180deg, #e57922, #a64d08) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  border: 1px solid #ffc082 !important;
+  padding: 5px 10px !important;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(229, 121, 34, 0.4);
+}
+
+.btn-toggle-guide:hover {
+  filter: brightness(1.2);
+}
+
 .btn-show-all {
   background: linear-gradient(180deg, #02d6e7, #087e8e) !important;
   color: #000 !important;
@@ -135,6 +150,130 @@
 
 .btn-show-all:hover {
   filter: brightness(1.2);
+}
+
+/* PANEL DE GUÍA RÁPIDA DE REGLAS DESPLEGABLE */
+.camc-rules-guide-panel {
+  display: none;
+  background: linear-gradient(180deg, #181d1e, #0d1011);
+  border: 2px solid var(--camc-copper, #e57922);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 0 25px rgba(229, 121, 34, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.8);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.camc-rules-guide-panel.open {
+  display: block;
+}
+
+.guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--camc-copper, #e57922);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.guide-header h3 {
+  margin: 0;
+  font-family: CAMCHead, sans-serif;
+  font-size: 16px;
+  color: var(--camc-copper, #e57922);
+  letter-spacing: 0.05em;
+  border: none;
+}
+
+.btn-close-guide {
+  background: transparent !important;
+  border: none !important;
+  color: #a6a099 !important;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-close-guide:hover {
+  color: #fff !important;
+}
+
+.guide-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.guide-card {
+  background: rgba(10, 13, 14, 0.9);
+  border: 1px solid #363e40;
+  border-radius: 5px;
+  padding: 8px 10px;
+}
+
+.guide-card.full-wide {
+  grid-column: 1 / -1;
+}
+
+.guide-card h4 {
+  margin: 0 0 6px;
+  font-family: CAMCHead, sans-serif;
+  font-size: 13px;
+  color: var(--camc-cyan, #02d6e7);
+  border: none;
+}
+
+.guide-card ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #d1cbbe;
+}
+
+.guide-card li {
+  margin-bottom: 3px;
+}
+
+.guide-card code {
+  background: #000;
+  color: var(--camc-cyan, #02d6e7);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.guide-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hl-badge {
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid #363e40;
+}
+
+.hl-badge.green {
+  background: rgba(88, 196, 119, 0.15);
+  border-color: #58c477;
+  color: #8be6a3;
+}
+
+.hl-badge.orange {
+  background: rgba(229, 121, 34, 0.15);
+  border-color: #e57922;
+  color: #ffb882;
+}
+
+.hl-badge.red {
+  background: rgba(224, 78, 45, 0.15);
+  border-color: #e04e2d;
+  color: #ff9b85;
 }
 
 /* BANDA DE FASES DEL TURNO */

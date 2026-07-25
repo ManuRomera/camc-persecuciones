@@ -4,9 +4,14 @@ const ApplicationV1 = foundry.appv1?.api?.Application || Application;
 
 /**
  * HUD interactivo Rúnico-Motero para el Control de Persecuciones en Cuervos de Asgard MC.
- * Cumplimiento 100% riguroso con el manual oficial del juego y la configuración CONFIG.CAMC.persecucion.
+ * Incluye Guía Rápida de Reglas desplegable para el Director de Juego y jugadores.
  */
 export class CAMCChaseHUD extends ApplicationV1 {
+  constructor(options = {}) {
+    super(options);
+    this.showGuide = false;
+  }
+
   static get defaultOptions() {
     return foundry.utils.mergeObject(super.defaultOptions, {
       id: "camc-chase-hud",
@@ -36,7 +41,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       selected: String(v.mod) === String(state.visibilidad) || v.key === state.visibilidad
     }));
 
-    // Opciones de movimiento de CONFIG.CAMC.persecucion
     const movimientosOptions = (config.movimiento || [
       { key: "cambiar_posicion", label: "Cambiar de posición", mod: 0, summary: "Avanza 1 franja; 2 con crítico." },
       { key: "mantener_posicion", label: "Mantener posición", mod: null, summary: "No requiere tirada; conserva la franja." },
@@ -47,7 +51,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       modText: m.mod !== null ? (m.mod >= 0 ? `+${m.mod} Dif` : `${m.mod} Dif`) : ""
     }));
 
-    // Opciones de maniobra de CONFIG.CAMC.persecucion + maniobras de combate
     const maniobrasOptions = [
       ...(config.maniobras || [
         { key: "embestir", label: "Embestir", mod: 0, summary: "Tirada enfrentada contra Evasión; causa daño de moto." },
@@ -132,6 +135,7 @@ export class CAMCChaseHUD extends ApplicationV1 {
       ...data,
       state,
       isGM,
+      showGuide: this.showGuide,
       baseDifficulty,
       terrenos,
       visibilidad,
@@ -203,6 +207,17 @@ export class CAMCChaseHUD extends ApplicationV1 {
 
     container.addEventListener("dragover", ev => ev.preventDefault());
     container.addEventListener("drop", ev => this._onDrop(ev));
+
+    // TOGGLE GUÍA RÁPIDA DE REGLAS
+    container.querySelector(".btn-toggle-guide")?.addEventListener("click", () => {
+      this.showGuide = !this.showGuide;
+      this.render(false);
+    });
+
+    container.querySelector(".btn-close-guide")?.addEventListener("click", () => {
+      this.showGuide = false;
+      this.render(false);
+    });
 
     container.querySelector(".btn-show-all")?.addEventListener("click", async () => {
       await ChaseState.showToAllPlayers();
@@ -318,7 +333,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- EJECUCIÓN RIGUROSA DE MOVIMIENTO SEGÚN EL MANUAL ---
   async _executeMovementRoll(participantId, actionKey) {
     const state = ChaseState.get();
     const p = state.participants.find(x => x.id === participantId);
@@ -353,13 +367,11 @@ export class CAMCChaseHUD extends ApplicationV1 {
       return;
     }
 
-    // Dificultad objetivo = Terreno + Visibilidad + ModAcción + Penalización Obstaculizado
     const targetDifficulty = baseDiff + actionMod + (p.obstaculizadoMod || 0);
 
     let result = null;
 
     if (motoActor && MountRollsCls) {
-      // CAMCMountRolls.rollDrive aplica automáticamente la Maniobrabilidad de la moto y el penalizador por Daño Grave (-3)
       result = await MountRollsCls.rollDrive(pilotActor, motoActor, {
         label: `Persecución (${p.role === "pursuer" ? "Perseguidor" : "Perseguido"}): ${actionLabel}`,
         difficulty: targetDifficulty
@@ -393,7 +405,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
       else if (actionKey === "cambiar_posicion") delta = isCrit ? 2 : 1;
       else if (actionKey === "obstaculizar") {
         delta = 1;
-        // Aplicar penalizador al perseguidor inmediato
         const state = ChaseState.get();
         const rival = state.participants.find(x => x.role !== participant.role && x.franja === participant.franja - 1);
         if (rival) {
@@ -410,7 +421,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- EJECUCIÓN RIGUROSA DE MANIOBRAS OFICIALES ---
   async _executeManeuverRoll(participantId, maneuverKey) {
     const state = ChaseState.get();
     const attacker = state.participants.find(x => x.id === participantId);
@@ -492,7 +502,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     });
   }
 
-  // --- MANIOBRA: EMBESTIR (Oficial CONFIG.CAMC) ---
   async _resolveRam(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, targetMoto, state) {
     const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
 
@@ -522,7 +531,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- MANIOBRA: ARROLLAR (Oficial CONFIG.CAMC) ---
   async _resolveOverrun(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
     const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
@@ -548,7 +556,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- MANIOBRA: SACAR DE LA CARRETERA (Oficial CONFIG.CAMC, Mod +3) ---
   async _resolveOffRoad(attacker, attackerActor, attackerMoto, targetParticipant, targetActor, state) {
     const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
     const visibMod = CONFIG.CAMC?.persecucion?.visibilidad?.find(v => v.key === state.visibilidad)?.mod || 0;
@@ -574,7 +581,6 @@ export class CAMCChaseHUD extends ApplicationV1 {
     }
   }
 
-  // --- MANIOBRA: EVADIRSE (Oficial CONFIG.CAMC) ---
   async _resolveEvade(attacker, attackerActor, attackerMoto, state) {
     const { MountRollsCls, YsystemDiceCls } = await this._getSystemRollers();
     const baseDiff = ChaseState.getBaseDifficulty(state);
