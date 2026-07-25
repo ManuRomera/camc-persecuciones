@@ -1,6 +1,6 @@
 /**
  * Modelo de Estado Global para Persecuciones en Cuervos de Asgard MC.
- * Vinculación bidireccional entre Piloto y Moto, Iniciativa y Gestión de Fases.
+ * Sin forzado de fases, con eliminación completa y ordenación por iniciativa.
  */
 export class ChaseState {
   static SETTING_KEY = "activeChaseState";
@@ -32,8 +32,6 @@ export class ChaseState {
       visibilidad: "normal",   // normal(+0), mala(+2), pesima(+4)
       franjasMax: 10,
       turno: 1,
-      fase: "iniciativa",      // iniciativa, declaracion, movimiento, maniobra
-      activeParticipantId: null,
       participants: []
     };
 
@@ -57,7 +55,7 @@ export class ChaseState {
     const current = this.get();
     const updated = foundry.utils.mergeObject(current, changes, { inplace: false });
 
-    // Ordenar participantes por iniciativa descendente si están en fase de movimiento/maniobra
+    // Ordenar automáticamente por iniciativa descendente si hay tiradas
     if (updated.participants && updated.participants.length > 1) {
       updated.participants.sort((a, b) => (Number(b.iniciativa) || 0) - (Number(a.iniciativa) || 0));
     }
@@ -73,6 +71,31 @@ export class ChaseState {
     }
 
     return updated;
+  }
+
+  /**
+   * Finaliza y elimina la persecución actual por completo.
+   */
+  static async clearChase() {
+    if (!game.user.isGM) {
+      game.socket.emit(`module.${this.MODULE_ID}`, { type: "CLEAR_CHASE" });
+      return;
+    }
+
+    const resetState = {
+      active: false,
+      title: "ᚱ PERSECUCIÓN EN LAS LLANURAS YERMAS ᛏ",
+      terreno: "media",
+      visibilidad: "normal",
+      franjasMax: 10,
+      turno: 1,
+      participants: []
+    };
+
+    await game.settings.set(this.MODULE_ID, this.SETTING_KEY, resetState);
+    game.socket.emit(`module.${this.MODULE_ID}`, { type: "REFRESH_CHASE_HUD", state: resetState });
+    Hooks.callAll("camcChaseStateChanged", resetState);
+    return resetState;
   }
 
   static async showToAllPlayers() {

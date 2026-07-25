@@ -144,31 +144,32 @@
   cursor: pointer;
 }
 
-/* BANDERÍN DE INSTRUCCIÓN ACTIVA DE FASE */
-.camc-instruction-banner {
-  background: linear-gradient(90deg, rgba(2, 214, 231, 0.15), rgba(229, 121, 34, 0.15));
-  border: 1px solid var(--camc-cyan, #02d6e7);
-  border-radius: 5px;
-  padding: 6px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: #fff;
-  box-shadow: 0 0 10px rgba(2, 214, 231, 0.2);
+.danger-btn {
+  background: linear-gradient(180deg, #e04e2d, #8f2009) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  font-size: 10px !important;
+  border: 1px solid #ff8f75 !important;
+  padding: 3px 6px !important;
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(224, 78, 45, 0.4);
+}
+
+.danger-btn:hover {
+  filter: brightness(1.2);
 }
 
 .btn-highlight-action {
   background: linear-gradient(180deg, #e57922, #b55000) !important;
   color: #fff !important;
   font-weight: bold !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   border: 1px solid #fff !important;
-  border-radius: 4px !important;
-  padding: 4px 10px !important;
+  border-radius: 3px !important;
+  padding: 3px 6px !important;
   cursor: pointer !important;
-  box-shadow: 0 0 10px rgba(229, 121, 34, 0.6);
-  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px rgba(229, 121, 34, 0.5);
 }
 
 /* PANEL DE GUÍA RÁPIDA DE REGLAS DESPLEGABLE */
@@ -279,52 +280,6 @@
   background: rgba(224, 78, 45, 0.15);
   border-color: #e04e2d;
   color: #ff9b85;
-}
-
-/* BANDA DE FASES DEL TURNO */
-.camc-phase-bar.compact-phase-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #0b0e0f;
-  border: 1px solid #363e40;
-  border-radius: 5px;
-  padding: 4px 10px;
-  box-shadow: inset 0 0 10px #000;
-}
-
-.phase-step {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: CAMCHead, sans-serif;
-  font-size: 11px;
-  color: #727c7f;
-  cursor: pointer;
-  padding: 3px 6px;
-  border-radius: 3px;
-  transition: all 0.2s ease;
-}
-
-.phase-step.active {
-  color: #fff;
-  background: rgba(2, 214, 231, 0.18);
-  border: 1px solid var(--camc-cyan, #02d6e7);
-  box-shadow: 0 0 8px rgba(2, 214, 231, 0.3);
-}
-
-.phase-rune {
-  font-size: 14px;
-  color: var(--camc-copper, #e57922);
-}
-
-.phase-step.active .phase-rune {
-  color: var(--camc-cyan, #02d6e7);
-}
-
-.phase-arrow {
-  color: #444c4e;
-  font-size: 11px;
 }
 
 /* PISTA TÁCTICA DE FRANJAS CON DUAL AVATAR (PJ + MOTO) */
@@ -564,14 +519,20 @@
   color: #ccc;
 }
 
-.init-tag {
+.rank-tag {
+  background: rgba(229, 121, 34, 0.2);
   border-color: var(--camc-copper, #e57922);
-  color: var(--camc-copper, #e57922);
+  color: #ffc28d;
+}
+
+.init-tag {
+  border-color: var(--camc-cyan, #02d6e7);
+  color: var(--camc-cyan, #02d6e7);
 }
 
 .franja-tag {
-  border-color: var(--camc-cyan, #02d6e7);
-  color: var(--camc-cyan, #02d6e7);
+  border-color: #58c477;
+  color: #8be6a3;
 }
 
 .health-tag {

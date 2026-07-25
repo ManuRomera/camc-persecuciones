@@ -43,17 +43,15 @@
         </div>
       </div>
 
-      {{!-- GUÍA RÁPIDA Y CONTROLES DJ --}}
+      {{!-- CONTROLES Y ELIMINACIÓN DE PERSECUCIÓN --}}
       <div class="camc-dashboard-tile controls compact-tile">
-        <label><i class="fas fa-book"></i> Controles & DJ</label>
+        <label><i class="fas fa-tools"></i> Acciones DJ</label>
         <div class="camc-btn-group">
-          <button type="button" class="btn-toggle-guide" title="Abrir o cerrar la Guía Rápida de Reglas"><i class="fas fa-book-open"></i> Guía</button>
+          <button type="button" class="btn-roll-initiatives btn-highlight-action" title="Tirar iniciativa de todos"><i class="fas fa-dice"></i> 🎲 Tirar Iniciativas</button>
+          <button type="button" class="btn-toggle-guide" title="Guía Rápida de Reglas"><i class="fas fa-book-open"></i> Guía</button>
           {{#if isGM}}
             <button type="button" class="btn-show-all" title="Desplegar a todos"><i class="fas fa-bullhorn"></i> Mostrar</button>
-            <button type="button" class="btn-next-turn" title="Avanzar turno"><i class="fas fa-step-forward"></i> Turno {{state.turno}}</button>
-            <button type="button" class="btn-reset-chase danger" title="Reiniciar persecución"><i class="fas fa-undo"></i></button>
-          {{else}}
-            <span class="camc-tile-value">Turno {{state.turno}}</span>
+            <button type="button" class="btn-delete-chase danger-btn" title="Finalizar y eliminar la persecución por completo"><i class="fas fa-trash-alt"></i> 🗑️ Eliminar</button>
           {{/if}}
         </div>
       </div>
@@ -118,34 +116,7 @@
     </div>
   </section>
 
-  {{!-- BANDA INTERACTIVA DE FASES DEL TURNO --}}
-  <div class="camc-phase-bar compact-phase-bar">
-    <div class="phase-step {{#if (eq state.fase 'iniciativa')}}active{{/if}}" data-fase="iniciativa">
-      <span class="phase-rune">ᛏ</span> 1. INICIATIVA
-    </div>
-    <div class="phase-arrow">➔</div>
-    <div class="phase-step {{#if (eq state.fase 'declaracion')}}active{{/if}}" data-fase="declaracion">
-      <span class="phase-rune">ᚱ</span> 2. DECLARACIÓN (Orden Inverso)
-    </div>
-    <div class="phase-arrow">➔</div>
-    <div class="phase-step {{#if (eq state.fase 'movimiento')}}active{{/if}}" data-fase="movimiento">
-      <span class="phase-rune">⚡</span> 3. MOVIMIENTO (Orden Iniciativa)
-    </div>
-    <div class="phase-arrow">➔</div>
-    <div class="phase-step {{#if (eq state.fase 'maniobra')}}active{{/if}}" data-fase="maniobra">
-      <span class="phase-rune">⚔️</span> 4. MANIOBRAS Y ATAQUES
-    </div>
-  </div>
-
-  {{!-- BANDERÍN DE INSTRUCCIÓN ACTIVA DEL TURNO --}}
-  <div class="camc-instruction-banner">
-    <span>{{{phaseInstruction}}}</span>
-    {{#if (eq state.fase 'iniciativa')}}
-      <button type="button" class="btn-roll-initiatives btn-highlight-action"><i class="fas fa-dice"></i> 🎲 TIRAR INICIATIVAS DE PERSECUCIÓN</button>
-    {{/if}}
-  </div>
-
-  {{!-- PISTA TÁCTICA CON DUAL AVATAR (PERSONAJE + MOTO) --}}
+  {{!-- PISTA TÁCTICA CON DUAL AVATAR (PERSONAJE + MOTO VINCULADA) --}}
   <section class="camc-chase-track-section compact-track-section">
     <div class="camc-track-header">
       <span><i class="fas fa-compress-arrows-alt"></i> FRANJA 1 (ᚠ ORIGEN)</span>
@@ -158,7 +129,7 @@
         <div class="franja-cell {{#if this.isEscape}}escape-cell{{/if}} {{#if this.isStart}}start-cell{{/if}}" data-franja="{{this.numero}}">
           <div class="franja-number-badge"><span class="cell-rune">{{this.rune}}</span> {{this.numero}}</div>
 
-          {{!-- PERSEGUIDORES --}}
+          {{!-- PERSEGUIDORES EN ESTA FRANJA --}}
           <div class="franja-slot pursuers-slot">
             {{#each this.pursuers}}
               <div class="participant-token pursuer-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.pilotName}} montado en {{this.motoName}} (Franja {{this.franja}})">
@@ -171,7 +142,7 @@
 
           <div class="franja-divider runic-divider"></div>
 
-          {{!-- PERSEGUIDOS --}}
+          {{!-- PERSEGUIDOS EN ESTA FRANJA --}}
           <div class="franja-slot evaders-slot">
             {{#each this.evaders}}
               <div class="participant-token evader-token {{#if this.isControlled}}active-user-token{{/if}}" data-participant-id="{{this.id}}" title="{{this.pilotName}} montado en {{this.motoName}} (Franja {{this.franja}})">
@@ -186,7 +157,7 @@
     </div>
   </section>
 
-  {{!-- ROSTER COMPLETO CON TARJETAS COMPACTAS (PERSONAJE + MOTO VINCULADA + CONTROLES) --}}
+  {{!-- ROSTER COMPLETO CON TARJETAS DE PERSONAJE + MOTO Y RANKING VISUAL DE INICIATIVA --}}
   <main class="camc-chase-roster-grid compact-roster-grid">
     
     {{!-- COLUMNA DE PERSEGUIDOS --}}
@@ -203,8 +174,9 @@
               <div class="identity">
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
+                  <span class="tag rank-tag" title="Posición en el orden de iniciativa">{{this.rankText}}</span>
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.iniciativa}}<span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>{{/if}}
+                  <span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>
                   {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> Salud: {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
@@ -226,7 +198,7 @@
                 <div class="moto-meta">
                   <div class="moto-title">
                     <strong><i class="fas fa-motorcycle"></i> {{this.mountInfo.name}}</strong>
-                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad del manual">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
+                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad del manual aplicada a la tirada">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
                   </div>
                   <div class="moto-structure-bar">
                     <div class="bar-fill" style="width: {{this.mountInfo.estructuraPct}}%;"></div>
@@ -295,8 +267,9 @@
               <div class="identity">
                 <h4>{{this.name}}</h4>
                 <div class="meta-tags">
+                  <span class="tag rank-tag" title="Posición en el orden de iniciativa">{{this.rankText}}</span>
                   <span class="tag franja-tag"><i class="fas fa-road"></i> Franja {{this.franja}}</span>
-                  {{#if this.iniciativa}}<span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>{{/if}}
+                  <span class="tag init-tag"><i class="fas fa-bolt"></i> Init: {{this.iniciativa}}</span>
                   {{#if this.healthInfo}}<span class="tag health-tag"><i class="fas fa-heart"></i> Salud: {{this.healthInfo.value}}/{{this.healthInfo.max}}</span>{{/if}}
                 </div>
               </div>
@@ -318,7 +291,7 @@
                 <div class="moto-meta">
                   <div class="moto-title">
                     <strong><i class="fas fa-motorcycle"></i> {{this.mountInfo.name}}</strong>
-                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad del manual">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
+                    <span class="maniobra-badge" title="Bonificación de Maniobrabilidad del manual aplicada a la tirada">+{{this.mountInfo.maniobrabilidad}} Maniobrabilidad</span>
                   </div>
                   <div class="moto-structure-bar">
                     <div class="bar-fill" style="width: {{this.mountInfo.estructuraPct}}%;"></div>
