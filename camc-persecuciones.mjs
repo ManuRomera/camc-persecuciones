@@ -47,7 +47,6 @@ Hooks.once("init", async () => {
       visibilidad: "normal",
       franjasMax: 10,
       turno: 1,
-      fase: "movimiento",
       participants: []
     }
   });
@@ -103,6 +102,8 @@ Hooks.once("ready", () => {
       }
     } else if (data.type === "UPDATE_CHASE_STATE" && game.user.isGM) {
       await ChaseState.update(data.changes, { showToAll: data.showToAll });
+    } else if (data.type === "CLEAR_CHASE" && game.user.isGM) {
+      await ChaseState.clearChase();
     }
   });
 
@@ -115,29 +116,9 @@ Hooks.once("ready", () => {
   console.log(`CAMC Persecuciones | Listo y sincronizado.`);
 });
 
-// 3. INTEGRACIÓN EN CONTROLES DE ESCENA
+// 3. INTEGRACIÓN EN CONTROLES DE ESCENA (DENTRO DE CONTROLES DE FICHA / TOKENS)
 Hooks.on("getSceneControlButtons", controls => {
-  const chaseCategory = {
-    name: "camc-persecuciones",
-    title: "Persecuciones",
-    icon: "fas fa-flag-checkered",
-    layer: "tokens",
-    visible: true,
-    tools: [
-      {
-        name: "chase-hud-toggle",
-        title: "Control Visual de Persecuciones (CAMC)",
-        icon: "fas fa-road",
-        button: true,
-        visible: true,
-        onClick: () => toggleChaseHUD(),
-        onChange: () => toggleChaseHUD()
-      }
-    ]
-  };
-
   if (Array.isArray(controls)) {
-    controls.push(chaseCategory);
     const tokenCategory = controls.find(c => c.name === "tokens" || c.name === "token");
     if (tokenCategory && Array.isArray(tokenCategory.tools)) {
       tokenCategory.tools.push({
@@ -151,7 +132,6 @@ Hooks.on("getSceneControlButtons", controls => {
       });
     }
   } else if (controls && typeof controls === "object") {
-    controls["camc-persecuciones"] = chaseCategory;
     if (controls.tokens || controls.token) {
       const tCat = controls.tokens || controls.token;
       if (tCat.tools && typeof tCat.tools === "object") {
