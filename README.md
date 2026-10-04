@@ -1,5 +1,12 @@
 # Cuervos de Asgard MC · Control Visual de Persecuciones para Foundry VTT
 
+<p align="center">
+  <a href="https://github.com/ManuRomera/camc-persecuciones/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ManuRomera/camc-persecuciones?include_prereleases&style=for-the-badge&color=e0752b&label=release"></a>
+  <a href="https://foundryvtt.com"><img alt="Foundry VTT V13" src="https://img.shields.io/badge/Foundry%20VTT-V13-57d8c8?style=for-the-badge"></a>
+  <a href="https://github.com/ManuRomera/camc-persecuciones/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/ManuRomera/camc-persecuciones/total?style=for-the-badge&color=ff7a1f"></a>
+  <img alt="System" src="https://img.shields.io/badge/system-cuervos%20de%20asgard-2b3245?style=for-the-badge">
+</p>
+
 > **Módulo Oficial para Foundry VTT v13.** Diseñado específicamente para integrarse con el sistema [Cuervos de Asgard Motor Club](https://github.com/ManuRomera/cuervos-de-asgard-mc). Permite controlar visualmente en pantalla las persecuciones de vehículos según el reglamento oficial del manual de juego.
 
 Módulo nativo que añade una **Pista Táctica Nórdico-Motera** de 10 franjas con **Runas Elder Futhark**, consolas heroicas de tirada de dados, barra de fases de turno (Iniciativa, Declaración, Movimiento, Maniobra) y vinculación bidireccional entre Piloto y Moto con consumo automático de Maniobrabilidad y Daño de Estructura.
