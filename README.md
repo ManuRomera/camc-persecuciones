@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/img/banner.png" alt="Cuervos de Asgard MC · Control visual de persecuciones" width="100%">
+</p>
+
 # Cuervos de Asgard MC · Control Visual de Persecuciones para Foundry VTT
 
 <p align="center">
@@ -12,6 +16,12 @@
 Módulo nativo que añade una **Pista Táctica Nórdico-Motera** de 10 franjas con **Runas Elder Futhark**, consolas heroicas de tirada de dados, barra de fases de turno (Iniciativa, Declaración, Movimiento, Maniobra) y vinculación bidireccional entre Piloto y Moto con consumo automático de Maniobrabilidad y Daño de Estructura.
 
 ---
+
+## Así se ve
+
+<p align="center">
+  <img src="docs/img/persecucion.png" alt="Pista nórdico-motera de 10 franjas con perseguidos y perseguidores" width="100%">
+</p>
 
 ## ⚡ Instalación directa en Foundry VTT
 
