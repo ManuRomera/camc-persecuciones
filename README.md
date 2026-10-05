@@ -94,3 +94,15 @@ Módulo desarrollado por **Manu Romera**, miembro de **Bruma's Rol**, diseñado 
 ## ⚖️ Aviso legal
 
 Este paquete es un módulo complementario no oficial para uso en Foundry VTT. El código de integración se distribuye bajo licencia de código abierto.
+
+---
+
+<p align="center">
+  <a href="https://github.com/ManuRomera">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ManuRomera/ManuRomera/main/brand/MR_09_Monograma_Marfil_Transparente.png">
+      <img src="https://raw.githubusercontent.com/ManuRomera/ManuRomera/main/brand/MR_10_Monograma_Negro_Transparente.png" alt="MR · Manu Romera" height="56">
+    </picture>
+  </a><br>
+  <sub>Hecho por <a href="https://github.com/ManuRomera"><b>Manu Romera</b></a> · Digital RPG Design</sub>
+</p>
